@@ -129,6 +129,20 @@ export default function Footer({ onOpenContact }) {
               <ArrowUpRight className="w-3.5 h-3.5 text-[#FF8738] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </a>
 
+            {/* Official Instagram Handle Link */}
+            <a 
+              href="https://www.instagram.com/northup.studio/" 
+              target="_blank" 
+              rel="noreferrer" 
+              data-cursor="hover"
+              className="group inline-flex items-center gap-2 font-mono text-[12px] sm:text-[14px] text-white/75 hover:text-[#FF8738] transition-colors py-0.5 outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] rounded-lg"
+            >
+              <span className="underline decoration-white/30 underline-offset-4 group-hover:decoration-[#FF8738] transition-all">
+                @northup.studio
+              </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#FF8738] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+
             {/* Availability Pill */}
             <div className="mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px] sm:text-[11px] tracking-wider uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -214,8 +228,8 @@ export default function Footer({ onOpenContact }) {
             </h4>
             <ul className="flex flex-row md:flex-col items-center md:items-start gap-5 md:gap-2">
               {[
-                { name: 'Instagram', href: 'https://instagram.com' },
-                { name: 'LinkedIn', href: 'https://linkedin.com' },
+                { name: 'Instagram', handle: '@northup.studio', href: 'https://www.instagram.com/northup.studio/' },
+                { name: 'LinkedIn', handle: '', href: 'https://linkedin.com' },
               ].map((item, idx) => (
                 <li key={idx}>
                   <a 
@@ -226,7 +240,7 @@ export default function Footer({ onOpenContact }) {
                     className="group inline-flex items-center gap-1.5 font-mono text-[13px] sm:text-[14px] text-white/70 hover:text-white transition-all duration-200"
                   >
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">
-                      {item.name}
+                      {item.name} {item.handle && <span className="text-[#FF8738] text-[12px] opacity-90">({item.handle})</span>}
                     </span>
                     <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#FF8738] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
                   </a>

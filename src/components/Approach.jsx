@@ -146,9 +146,9 @@ export default function Approach({ onOpenContact }) {
   const teamMembers = [
     {
       name: "Tanay Deshmukh",
-      role: "FOUNDER · Design & Technical",
+      role: "Design & Technical",
       image: "/assets/tanay.png",
-      tag: "Founder & Lead",
+      tag: "Design & Technical",
     },
     {
       name: "Vikranth Dixit",

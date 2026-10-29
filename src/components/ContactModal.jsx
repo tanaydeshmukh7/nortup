@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, Check, Copy, Mail, Send } from 'lucide-react'
+import { X, Check, Copy, Mail, Send, ArrowUpRight } from 'lucide-react'
 
 export default function ContactModal({ isOpen, onClose, initialSubject = "Project Inquiry" }) {
   if (!isOpen) return null
@@ -63,7 +63,7 @@ export default function ContactModal({ isOpen, onClose, initialSubject = "Projec
         </div>
 
         {/* Quick Email Pill */}
-        <div className="p-3.5 rounded-2xl bg-[#1E1613] border border-white/[0.08] flex items-center justify-between mb-6">
+        <div className="p-3.5 rounded-2xl bg-[#1E1613] border border-white/[0.08] flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Mail className="w-5 h-5 text-[#FF8738]" />
             <span className="font-mono text-sm text-[#F5F1ED] font-medium select-all">
@@ -86,6 +86,19 @@ export default function ContactModal({ isOpen, onClose, initialSubject = "Projec
               </>
             )}
           </button>
+        </div>
+
+        {/* Quick Instagram Link */}
+        <div className="flex items-center justify-between px-1 mb-5">
+          <a
+            href="https://www.instagram.com/northup.studio/"
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-1.5 font-mono text-xs text-white/70 hover:text-[#FF8738] transition-colors"
+          >
+            <span>Instagram: <span className="text-white/90 group-hover:text-[#FF8738]">@northup.studio</span></span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#FF8738] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </a>
         </div>
 
         {/* Contact Form */}
