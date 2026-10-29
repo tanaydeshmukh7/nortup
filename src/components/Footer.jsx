@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, ArrowUp, Sparkles } from 'lucide-react'
 import FooterCompass from './FooterCompass'
 
 export default function Footer({ onOpenContact }) {
+  const footerContainerRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
   const currentYear = new Date().getFullYear()
 
@@ -29,7 +30,10 @@ export default function Footer({ onOpenContact }) {
         Organized Link Columns, and Monumental NORTHUP® Signature
         ========================================================================
       */}
-      <div className="relative w-full max-w-[1400px] mx-auto rounded-[24px] sm:rounded-[32px] overflow-hidden border border-white/10 shadow-[0_24px_65px_rgba(0,0,0,0.85)] bg-[#090504] px-5 sm:px-10 lg:px-16 py-10 sm:py-16 lg:py-20 text-white">
+      <div 
+        ref={footerContainerRef}
+        className="relative w-full max-w-[1400px] mx-auto rounded-[24px] sm:rounded-[32px] overflow-hidden border border-white/10 shadow-[0_24px_65px_rgba(0,0,0,0.85)] bg-[#090504] px-5 sm:px-10 lg:px-16 pt-10 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 lg:pb-14 text-white"
+      >
         
         {/* Background Atmospheric Layers: Cinematic Dark-Burgundy-to-Orange Gradient */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -54,22 +58,8 @@ export default function Footer({ onOpenContact }) {
 
         {/* 
           ========================================================================
-          ZONE A — COMPASS LANDING STAGE (Cinematic Ground Plane & Physics Descent)
-          ========================================================================
-        */}
-        <FooterCompass />
-
-        {/* Seamless Atmospheric Divider between Zone A and Zone B */}
-        <div className="relative z-10 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-8 sm:my-12 lg:my-14" />
-
-        {/* 
-          ========================================================================
-          ZONE B — COMPLETE FOOTER INFORMATION
-          ========================================================================
-        */}
-
-        {/* 
           1. TOP SECTION — CONTACT AND BRAND (Spacious Two-Column Editorial Grid)
+          ========================================================================
         */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-10 sm:mb-14">
           
@@ -267,12 +257,19 @@ export default function Footer({ onOpenContact }) {
           </div>
         </motion.div>
 
+        {/* 
+          ========================================================================
+          4. DEDICATED COMPASS LANDING STAGE (Scroll-Scrubbed Bottom Ground Plane)
+          ========================================================================
+        */}
+        <FooterCompass containerRef={footerContainerRef} />
+
         {/* Thin Divider Line above the bottom meta bar */}
         <div className="relative z-10 w-full h-px bg-white/10 mt-6 sm:mt-8 mb-5 sm:mb-6" />
 
         {/* 
           ========================================================================
-          4. MINIMAL BOTTOM BAR (Copyright, Pune, India, and Back to Top)
+          5. MINIMAL BOTTOM BAR (Copyright, Pune, India, and Back to Top)
           ========================================================================
         */}
         <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] sm:text-[12px] text-white/60 tracking-wider">
