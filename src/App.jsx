@@ -98,7 +98,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Footer onOpenContact={handleOpenContact} />
 
       {/* Interactive Contact / Audit Modal */}
       <ContactModal 
