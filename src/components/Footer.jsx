@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, ArrowUp, Sparkles } from 'lucide-react'
+import FooterCompass from './FooterCompass'
 
 export default function Footer({ onOpenContact }) {
   const shouldReduceMotion = useReducedMotion()
@@ -53,8 +54,22 @@ export default function Footer({ onOpenContact }) {
 
         {/* 
           ========================================================================
-          1. TOP SECTION — CONTACT AND BRAND (Spacious Two-Column Editorial Grid)
+          ZONE A — COMPASS LANDING STAGE (Cinematic Ground Plane & Physics Descent)
           ========================================================================
+        */}
+        <FooterCompass />
+
+        {/* Seamless Atmospheric Divider between Zone A and Zone B */}
+        <div className="relative z-10 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-8 sm:my-12 lg:my-14" />
+
+        {/* 
+          ========================================================================
+          ZONE B — COMPLETE FOOTER INFORMATION
+          ========================================================================
+        */}
+
+        {/* 
+          1. TOP SECTION — CONTACT AND BRAND (Spacious Two-Column Editorial Grid)
         */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-10 sm:mb-14">
           
