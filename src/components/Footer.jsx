@@ -37,6 +37,7 @@ export default function Footer() {
             </p>
             <a 
               href="mailto:northup4work@gmail.com" 
+              data-cursor="hover"
               className="font-inter text-[15px] sm:text-[17px] text-white/90 hover:text-[#FF8738] transition-colors underline-offset-4 hover:underline"
             >
               northup4work@gmail.com
@@ -50,16 +51,16 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 font-inter text-[14px] sm:text-[16px] text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">HOME</a>
+                <a href="#" data-cursor="hover" className="hover:text-white transition-colors">HOME</a>
               </li>
               <li>
-                <a href="#work" className="hover:text-white transition-colors">WORK</a>
+                <a href="#work" data-cursor="hover" className="hover:text-white transition-colors">WORK</a>
               </li>
               <li>
-                <a href="#services" className="hover:text-white transition-colors">SERVICES</a>
+                <a href="#services" data-cursor="hover" className="hover:text-white transition-colors">SERVICES</a>
               </li>
               <li>
-                <a href="#about" className="hover:text-white transition-colors">ABOUT US</a>
+                <a href="#about" data-cursor="hover" className="hover:text-white transition-colors">ABOUT US</a>
               </li>
             </ul>
           </div>
@@ -71,13 +72,13 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 font-inter text-[14px] sm:text-[16px] text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">Licenses and agreement</a>
+                <a href="#" data-cursor="hover" className="hover:text-white transition-colors">Licenses and agreement</a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">Privacy policy</a>
+                <a href="#" data-cursor="hover" className="hover:text-white transition-colors">Privacy policy</a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">Cookie setting</a>
+                <a href="#" data-cursor="hover" className="hover:text-white transition-colors">Cookie setting</a>
               </li>
             </ul>
           </div>
@@ -93,6 +94,7 @@ export default function Footer() {
                   href="https://instagram.com" 
                   target="_blank" 
                   rel="noreferrer" 
+                  data-cursor="hover"
                   className="hover:text-white transition-colors"
                 >
                   Instagram
@@ -103,6 +105,7 @@ export default function Footer() {
                   href="https://linkedin.com" 
                   target="_blank" 
                   rel="noreferrer" 
+                  data-cursor="hover"
                   className="hover:text-white transition-colors"
                 >
                   Linked In

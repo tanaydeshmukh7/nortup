@@ -1,9 +1,48 @@
-import React from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowUpRight } from 'lucide-react'
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowUpRight, CheckCircle2, Layers, Sparkles } from 'lucide-react'
 
 export default function Approach({ onOpenContact }) {
-  const shouldReduceMotion = useReducedMotion()
+  const [selectedService, setSelectedService] = useState(0)
+
+  const servicesList = [
+    {
+      title: "Brand Identity",
+      tag: "STRATEGY & DESIGN",
+      desc: "Distinctive visual systems, brand guidelines, bespoke logotypes, and art direction that command attention.",
+      deliverables: ["Visual Identity Systems", "Logo & Iconography", "Brand Style Guides", "Typography Curation"]
+    },
+    {
+      title: "Websites & Web Apps",
+      tag: "DIGITAL EXPERIENCES",
+      desc: "Immersive, motion-driven web experiences built on modern frameworks, engineered for speed and aesthetic excellence.",
+      deliverables: ["Custom React/Next.js Sites", "Motion & 3D Web Design", "CMS Integration", "Performance & SEO Tuning"]
+    },
+    {
+      title: "Landing Pages",
+      tag: "CONVERSION & LAUNCH",
+      desc: "High-impact storytelling pages designed to convert cold traffic into loyal clients and launch products with authority.",
+      deliverables: ["Product Launch Pages", "SaaS Landing Pages", "Campaign Funnels", "A/B Testing Structure"]
+    },
+    {
+      title: "Graphic & Poster Design",
+      tag: "EDITORIAL & VISUAL ART",
+      desc: "Bold poster series, digital illustrations, marketing collaterals, and print assets crafted with editorial precision.",
+      deliverables: ["Poster & Cover Art", "Social Campaign Assets", "Editorial Layouts", "Event & Merchandise Design"]
+    },
+    {
+      title: "E-Commerce",
+      tag: "REVENUE & SCALE",
+      desc: "Frictionless direct-to-consumer online storefronts designed to elevate brand perception and increase average order value.",
+      deliverables: ["Shopify & Custom Stores", "Product Showcase Pages", "Checkout Optimization", "Payment & Inventory Flow"]
+    },
+    {
+      title: "Digital Solutions",
+      tag: "TECHNICAL EXECUTION",
+      desc: "Tailored digital infrastructure, custom interactive tools, and automated workflows built to scale your business.",
+      deliverables: ["Custom Web Tools", "API Integrations", "Interactive Calculators", "Cloud & Domain Deployment"]
+    }
+  ]
 
   const stats = [
     { value: "03", label: "Creative minds" },
@@ -57,17 +96,17 @@ export default function Approach({ onOpenContact }) {
   ]
 
   return (
-    <section id="services" className="relative py-10 sm:py-14 px-2 sm:px-4 lg:px-6 max-w-[1400px] mx-auto scroll-mt-24 select-none">
+    <section id="services" className="relative py-10 sm:py-16 px-2 sm:px-4 lg:px-6 max-w-[1400px] mx-auto scroll-mt-24 select-none">
       
       {/* 
         ========================================================================
         Figma Frame 7: Unified Master Card [1382 x 2449 px]
-        Contains Services & Expertise, IDEAS INTO IMPACT, Process Cards, Team & Toolkit
+        Contains Services & Capabilities, IDEAS INTO IMPACT, Process Cards, Team & Toolkit
         ========================================================================
       */}
-      <div className="relative rounded-[26px] sm:rounded-[32px] overflow-hidden bg-[#0A0706] border border-white/10 shadow-[0_24px_65px_rgba(0,0,0,0.85)] text-white px-6 sm:px-12 lg:px-16 py-14 sm:py-20 lg:py-24">
+      <div className="relative rounded-[26px] sm:rounded-[32px] overflow-hidden bg-[#0A0706] border border-white/10 shadow-[0_24px_65px_rgba(0,0,0,0.85)] text-white px-5 sm:px-10 lg:px-16 py-12 sm:py-20 lg:py-24">
         
-        {/* Background Atmosphere Layer using user's bg asset */}
+        {/* Background Atmosphere Layer using user's authentic bg asset */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <img 
             src="/assets/bg.png" 
@@ -77,15 +116,16 @@ export default function Approach({ onOpenContact }) {
             decoding="sync"
           />
           {/* Subtle dark overlay to preserve text readability while retaining fiery atmosphere */}
-          <div className="absolute inset-0 bg-[#0A0706]/70" />
+          <div className="absolute inset-0 bg-[#0A0706]/75" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0A0706]/90 via-transparent to-[#0A0706]/95" />
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] lg:w-[1000px] h-[500px] bg-gradient-radial from-[#FF4D0A]/20 via-transparent to-transparent blur-[120px]" />
         </div>
 
         {/* 1. Header: [ SERVICES & EXPERTISE ] + Creative Digital Studio */}
         <div className="relative z-10 max-w-[1100px] mb-8 sm:mb-12">
-          <div className="font-mono text-[#FF8738] text-[13px] sm:text-[15px] font-semibold tracking-widest uppercase mb-3">
-            [ SERVICES &amp; EXPERTISE ]
+          <div className="inline-flex items-center gap-2 font-mono text-[#FF8738] text-[13px] sm:text-[15px] font-semibold tracking-widest uppercase mb-3 px-3 py-1 rounded-full bg-[#FF4D0A]/10 border border-[#FF4D0A]/20">
+            <Sparkles className="w-3.5 h-3.5 text-[#FF8738]" />
+            <span>SERVICES &amp; EXPERTISE</span>
           </div>
           <h2 className="font-sans font-bold text-[34px] sm:text-[48px] lg:text-[58px] text-white tracking-tight leading-tight mb-4">
             Creative Digital Studio
@@ -95,7 +135,70 @@ export default function Approach({ onOpenContact }) {
           </p>
         </div>
 
-        {/* 2. Monumental Typography Artwork: IDEAS INTO IMPACT */}
+        {/* 2. Interactive Agency Capabilities Grid */}
+        <div className="relative z-10 mb-14 sm:mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {servicesList.map((service, index) => {
+              const isSelected = selectedService === index
+              return (
+                <div
+                  key={index}
+                  onClick={() => setSelectedService(index)}
+                  onMouseEnter={() => setSelectedService(index)}
+                  data-cursor="hover"
+                  className={`relative p-6 sm:p-7 rounded-2xl sm:rounded-3xl transition-all duration-300 cursor-pointer flex flex-col justify-between border ${
+                    isSelected
+                      ? 'bg-[#18110E] border-[#FF4D0A] shadow-[0_12px_35px_rgba(255,77,10,0.18)] scale-[1.01]'
+                      : 'bg-[#120D0A]/80 border-white/[0.08] hover:border-white/20'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono text-[11px] sm:text-[12px] font-semibold tracking-wider uppercase text-[#FF8738]">
+                        {service.tag}
+                      </span>
+                      <span className="font-mono text-[12px] text-white/40">
+                        0{index + 1}
+                      </span>
+                    </div>
+
+                    <h3 className="font-jaro text-[24px] sm:text-[28px] text-white uppercase tracking-wide mb-2.5">
+                      {service.title}
+                    </h3>
+
+                    <p className="font-mono text-[12px] sm:text-[13px] text-white/70 leading-relaxed mb-5">
+                      {service.desc}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="space-y-1.5 mb-5 pt-3 border-t border-white/[0.08]">
+                      {service.deliverables.map((item, dIdx) => (
+                        <div key={dIdx} className="flex items-center gap-2 text-white/85 font-mono text-[11px] sm:text-[12px]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#FF4D0A] flex-shrink-0" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenContact(`Service Inquiry: ${service.title}`)
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl font-mono text-[11px] sm:text-[12px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 bg-white/5 hover:bg-[#FF4D0A] text-white border border-white/10 hover:border-[#FF4D0A]"
+                    >
+                      <span>Inquire About {service.title.split(' ')[0]}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 3. Monumental Typography Artwork: IDEAS INTO IMPACT */}
         <div className="relative z-10 my-6 sm:my-10 select-none overflow-hidden">
           <h1 className="font-anton text-[clamp(3.8rem,9.2vw,8.5rem)] leading-[0.88] uppercase tracking-wide text-white drop-shadow-[0_8px_45px_rgba(0,0,0,0.95)]">
             IDEAS<br />
@@ -103,7 +206,7 @@ export default function Approach({ onOpenContact }) {
           </h1>
         </div>
 
-        {/* 3. Methodology & Process Grid: 3 Stats Pills + [01] OUR APPROACH + [02] HOW WE WORK */}
+        {/* 4. Methodology & Process Grid: 3 Stats Badges + [01] OUR APPROACH + [02] HOW WE WORK */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch mb-16 sm:mb-24">
           
           {/* Left Column: 3 Stacked Badges (03, 03, ∞) */}
@@ -207,7 +310,7 @@ export default function Approach({ onOpenContact }) {
 
         {/* 
           ========================================================================
-          4. Inner Container: Team & Everyday Toolkit (Figma Rectangle 15)
+          5. Inner Container: Team & Everyday Toolkit (Figma Rectangle 15)
           ========================================================================
         */}
         <div id="about" className="relative z-10 rounded-[22px] sm:rounded-[28px] p-6 sm:p-10 lg:p-12 bg-[#120D0A]/90 backdrop-blur-md border border-white/10 shadow-2xl">
@@ -224,7 +327,7 @@ export default function Approach({ onOpenContact }) {
                   <img 
                     src={member.image} 
                     alt={member.name}
-                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   
@@ -276,6 +379,7 @@ export default function Approach({ onOpenContact }) {
                 <div 
                   key={idx}
                   title={tool.name}
+                  data-cursor="hover"
                   className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/[0.05] border border-white/[0.1] hover:border-[#FF4D0A]/50 hover:bg-[#FF4D0A]/15 flex items-center justify-center p-2 transition-all duration-200 cursor-default group"
                 >
                   <img 

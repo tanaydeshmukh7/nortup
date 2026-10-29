@@ -78,6 +78,7 @@ export default function Hero({ onOpenContact }) {
               <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
                 <a 
                   href="#work"
+                  data-cursor="hover"
                   className="px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white text-black font-keania text-[13px] sm:text-[14px] tracking-wider hover:bg-neutral-200 transition-all duration-200 shadow-md active:scale-95"
                 >
                   VIEW PROJECTS
@@ -85,6 +86,7 @@ export default function Hero({ onOpenContact }) {
 
                 <button 
                   onClick={() => onOpenContact('Get an Audit')}
+                  data-cursor="hover"
                   className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#191818]/90 text-white border border-white/20 font-keania text-[13px] sm:text-[14px] tracking-wider hover:border-white/50 hover:bg-[#272424] transition-all duration-200 shadow-md active:scale-95"
                 >
                   Get an Audit
@@ -95,6 +97,7 @@ export default function Hero({ onOpenContact }) {
               <div>
                 <button 
                   onClick={() => onOpenContact('Start Project')}
+                  data-cursor="hover"
                   className="group flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#ff4500] to-[#ff7c00] text-white font-keania text-[13px] sm:text-[14px] tracking-wider hover:brightness-110 transition-all duration-200 shadow-lg shadow-[#ff4500]/30 active:scale-95"
                 >
                   <span>START PROJECT</span>
