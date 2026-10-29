@@ -697,33 +697,62 @@ export default function Approach({ onOpenContact }) {
             </p>
           </div>
 
-          {/* Everyday Toolkit Bar matching Figma Group 9 */}
-          <div className="relative rounded-2xl p-5 sm:p-6 bg-black/60 border border-white/[0.08] flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-lg">
-            <div>
+          {/* Everyday Toolkit Bar matching Figma Group 9 with Infinite Scrolling Marquee */}
+          <div className="relative rounded-2xl p-5 sm:p-6 bg-black/60 border border-white/[0.08] flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 shadow-lg overflow-hidden">
+            <div className="flex-shrink-0 lg:max-w-[340px]">
               <h4 className="font-mono text-[16px] sm:text-[18px] font-bold text-white">
                 Our Everyday Toolkit
               </h4>
-              <p className="font-mono text-[11px] sm:text-[12px] text-white/70 mt-1 max-w-[380px]">
+              <p className="font-mono text-[11px] sm:text-[12px] text-white/70 mt-1 max-w-[340px]">
                 The tools behind our process, from the first sketch to the final launch.
               </p>
             </div>
 
-            {/* Brand Tool Icons */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {toolkit.map((tool, idx) => (
-                <div 
-                  key={idx}
-                  title={tool.name}
-                  data-cursor="hover"
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/[0.05] border border-white/[0.1] hover:border-[#FF4D0A]/50 hover:bg-[#FF4D0A]/15 flex items-center justify-center p-2 transition-all duration-200 cursor-default group"
-                >
-                  <img 
-                    src={tool.icon} 
-                    alt={tool.name} 
-                    className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
-                  />
+            {/* Seamless Infinite Marquee Track */}
+            <div className="relative w-full lg:max-w-[560px] xl:max-w-[650px] overflow-hidden select-none py-1">
+              {/* Subtle edge fades to blend icons into the dark container */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-black/80 via-black/40 to-transparent z-10 pointer-events-none" />
+
+              {/* Looping track */}
+              <div 
+                className="flex w-max items-center animate-[marquee_20s_linear_infinite] motion-reduce:animate-none hover:[animation-play-state:paused]"
+                data-cursor="hover"
+              >
+                {/* Track A */}
+                <div className="flex items-center gap-3 pr-3">
+                  {toolkit.map((tool, idx) => (
+                    <div 
+                      key={`a-${idx}`}
+                      title={tool.name}
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] hover:border-[#FF4D0A]/50 hover:bg-[#FF4D0A]/15 flex items-center justify-center p-2.5 transition-all duration-200 cursor-default group flex-shrink-0"
+                    >
+                      <img 
+                        src={tool.icon} 
+                        alt={tool.name} 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* Track B (Duplicated sequence for seamless infinite loop) */}
+                <div className="flex items-center gap-3 pr-3" aria-hidden="true">
+                  {toolkit.map((tool, idx) => (
+                    <div 
+                      key={`b-${idx}`}
+                      title={tool.name}
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] hover:border-[#FF4D0A]/50 hover:bg-[#FF4D0A]/15 flex items-center justify-center p-2.5 transition-all duration-200 cursor-default group flex-shrink-0"
+                    >
+                      <img 
+                        src={tool.icon} 
+                        alt={tool.name} 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

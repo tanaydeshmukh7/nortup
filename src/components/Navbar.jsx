@@ -1,30 +1,54 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
 export default function Navbar({ onOpenContact }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const shouldReduceMotion = useReducedMotion()
+  const navRef = useRef(null)
+
+  // Close mobile menu on Escape key or click outside
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false)
+    }
+
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [mobileMenuOpen])
 
   return (
     <motion.header 
+      ref={navRef}
       initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
-      className="w-full flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-1 sm:pb-2 select-none z-30"
+      className="relative w-full flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-1 sm:pb-2 select-none z-30"
     >
-      <nav className="w-full max-w-[1333px] h-[54px] sm:h-[72px] rounded-full bg-[#272424]/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+      <nav className="relative w-full max-w-[1333px] h-[56px] sm:h-[72px] rounded-full bg-[#272424]/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
         
-        {/* Left: Northup Studio Brand Logo */}
+        {/* Left: Northup Studio Brand Logo (Enlarged & Clearly Legible) */}
         <a 
           href="#" 
           data-cursor="hover"
-          className="flex items-center gap-3 transition-opacity duration-200 hover:opacity-90"
+          className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-90 flex-shrink-0 py-1"
         >
           <img 
             src="/assets/logo.png" 
             alt="Northup Studio" 
-            className="h-7 sm:h-10 w-auto object-contain"
+            className="h-8 sm:h-10 lg:h-11 w-auto object-contain transition-all"
           />
         </a>
 
@@ -67,6 +91,7 @@ export default function Navbar({ onOpenContact }) {
 
           {/* White Get An Estimate Button with double arrow >> */}
           <button 
+            type="button"
             onClick={() => onOpenContact('Get An Estimate')}
             data-cursor="hover"
             className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-black font-keania text-[13px] tracking-wider hover:bg-[#ff7c00] hover:text-white transition-all duration-300 shadow-md active:scale-95"
@@ -79,12 +104,14 @@ export default function Navbar({ onOpenContact }) {
         {/* Mobile Hamburger Toggle */}
         <div className="flex sm:hidden items-center gap-2">
           <button
+            type="button"
             onClick={() => onOpenContact('Get An Estimate')}
             className="px-3.5 py-1.5 rounded-full bg-white text-black font-keania text-[12px] tracking-wider hover:bg-neutral-200 active:scale-95 shadow-sm"
           >
             Estimate
           </button>
           <button 
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white focus:outline-none transition-colors"
             aria-label="Toggle menu"
@@ -94,15 +121,15 @@ export default function Navbar({ onOpenContact }) {
         </div>
       </nav>
 
-      {/* Mobile Dropdown Menu with AnimatePresence */}
+      {/* Mobile Dropdown Menu (Positioned relative to navbar pill, scrolls naturally) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.98 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="sm:hidden fixed top-[76px] left-4 right-4 bg-[#1c1818]/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 z-50"
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="sm:hidden absolute top-[calc(100%+6px)] left-3 right-3 bg-[#1c1818]/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 z-50"
           >
             <a 
               href="#work" 
@@ -132,6 +159,7 @@ export default function Navbar({ onOpenContact }) {
                 <span>ENG</span>
               </div>
               <button 
+                type="button"
                 onClick={() => { setMobileMenuOpen(false); onOpenContact('Get An Estimate'); }}
                 className="px-4 py-2 rounded-full bg-white text-black font-keania text-sm active:scale-95 transition-transform"
               >
