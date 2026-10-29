@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    background-color: #FFFFFF;
+    color: #000000;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: 'IBM Plex Mono', monospace;
+    overflow-x: hidden;
+  }
+}
+
+/* Warm refined studio lighting & glow utilities */
+.glow-warm {
+  box-shadow: 0 0 40px -8px rgba(255, 77, 10, 0.25);
+}
+
+.glow-ambient {
+  box-shadow: 0 0 60px -12px rgba(255, 135, 56, 0.2);
+}
+
+.glow-compass-rim {
+  filter: drop-shadow(0 0 25px rgba(255, 135, 56, 0.35)) drop-shadow(0 0 45px rgba(255, 77, 10, 0.2));
+}
+
+.glass-nav {
+  background: rgba(21, 16, 14, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-card {
+  background: linear-gradient(155deg, rgba(26, 19, 17, 0.85) 0%, rgba(21, 16, 14, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 135, 56, 0.3);
+}
+
+.glass-pill {
+  background: rgba(36, 26, 22, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Hide scrollbar for clean marquee */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom Scrollbar with warm bronze tone */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0908;
+}
+::-webkit-scrollbar-thumb {
+  background: #26130E;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF4D0A;
+}
