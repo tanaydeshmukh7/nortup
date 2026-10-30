@@ -9,10 +9,22 @@ import CTASection from './components/CTASection'
 import Footer from './components/Footer'
 import ContactModal from './components/ContactModal'
 import CustomCursor from './components/CustomCursor'
+import ArulisCaseStudy from './pages/ArulisCaseStudy'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
   const [contactSubject, setContactSubject] = useState('Project Inquiry')
+  const [currentRoute, setCurrentRoute] = useState(() => {
+    if (typeof window !== 'undefined') {
+      // Check for path or hash-based routing fallback
+      const path = window.location.pathname.replace(/\/$/, '') || '/'
+      if (path === '/work/arulis-dental-clinic') return path
+      if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
+      return path
+    }
+    return '/'
+  })
+  
   const lenisRef = useRef(null)
 
   // Initialize smooth inertia scrolling with Lenis
@@ -34,7 +46,7 @@ export default function App() {
     }
     animationFrameId = requestAnimationFrame(raf)
 
-    // Smooth navigation for all in-page hash links
+    // Smooth navigation for all in-page hash links (when on homepage)
     const handleAnchorClick = (e) => {
       const anchor = e.target.closest('a[href^="#"]')
       if (!anchor) return
@@ -60,6 +72,35 @@ export default function App() {
     }
   }, [])
 
+  // Listen to browser Back / Forward buttons (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.replace(/\/$/, '') || '/'
+      let nextRoute = path
+      if (window.location.hash.includes('work/arulis-dental-clinic')) {
+        nextRoute = '/work/arulis-dental-clinic'
+      }
+      setCurrentRoute(nextRoute)
+
+      if (window.location.hash && nextRoute === '/') {
+        setTimeout(() => {
+          const target = document.querySelector(window.location.hash)
+          if (target && lenisRef.current) {
+            lenisRef.current.scrollTo(target, { offset: -96, duration: 1.2 })
+          }
+        }, 80)
+      } else {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        if (lenisRef.current) {
+          lenisRef.current.scrollTo(0, { immediate: true })
+        }
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   // Pause Lenis when modal is open to prevent background scrolling
   useEffect(() => {
     if (!lenisRef.current) return
@@ -70,10 +111,53 @@ export default function App() {
     }
   }, [contactModalOpen])
 
+  // Central Navigation Handler
+  const handleNavigate = (to) => {
+    if (typeof window === 'undefined') return
+
+    // Hash navigation (e.g. "/#work" or "#work")
+    if (to.startsWith('/#') || to.startsWith('#')) {
+      const hash = to.replace(/^\//, '')
+      if (currentRoute !== '/') {
+        window.history.pushState(null, '', '/' + hash)
+        setCurrentRoute('/')
+        setTimeout(() => {
+          const target = document.querySelector(hash)
+          if (target && lenisRef.current) {
+            lenisRef.current.scrollTo(target, { offset: -96, duration: 1.2 })
+          } else if (target) {
+            target.scrollIntoView({ behavior: 'smooth' })
+          }
+        }, 120)
+      } else {
+        window.history.pushState(null, '', hash)
+        const target = document.querySelector(hash)
+        if (target && lenisRef.current) {
+          lenisRef.current.scrollTo(target, { offset: -96, duration: 1.2 })
+        }
+      }
+      return
+    }
+
+    // Direct path navigation (e.g. "/work/arulis-dental-clinic" or "/")
+    const normalized = to.replace(/\/$/, '') || '/'
+    window.history.pushState(null, '', normalized)
+    setCurrentRoute(normalized)
+
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true })
+    }
+  }
+
   const handleOpenContact = (subject = 'Project Inquiry') => {
     setContactSubject(subject)
     setContactModalOpen(true)
   }
+
+  const isArulisCaseStudy = 
+    currentRoute === '/work/arulis-dental-clinic' || 
+    currentRoute.startsWith('/work/arulis-dental-clinic')
 
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
@@ -81,28 +165,47 @@ export default function App() {
       <CustomCursor />
 
       {/* Fixed Viewport Floating Navbar (Persistent across entire website) */}
-      <Navbar onOpenContact={handleOpenContact} />
+      <Navbar 
+        onOpenContact={handleOpenContact} 
+        onNavigate={handleNavigate}
+        currentRoute={currentRoute}
+      />
 
-      {/* Main Content Sections */}
-      <main className="w-full">
-        {/* Hero Section */}
-        <Hero onOpenContact={handleOpenContact} />
+      {/* Conditional Rendering between Homepage and Dedicated Case Study */}
+      {isArulisCaseStudy ? (
+        <main className="w-full">
+          <ArulisCaseStudy 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+          />
+        </main>
+      ) : (
+        <>
+          {/* Main Content Sections */}
+          <main className="w-full">
+            {/* Hero Section */}
+            <Hero onOpenContact={handleOpenContact} />
 
-        {/* Ticker / Moving Forward Section */}
-        <Ticker />
+            {/* Ticker / Moving Forward Section */}
+            <Ticker />
 
-        {/* Featured Work Grid with Interactive Filters & Hover Cards */}
-        <FeaturedWork onOpenContact={handleOpenContact} />
+            {/* Featured Work Grid with Interactive Filters & Case Study Routing */}
+            <FeaturedWork 
+              onOpenContact={handleOpenContact} 
+              onNavigate={handleNavigate}
+            />
 
-        {/* Unified Frame 7: Services, IDEAS INTO IMPACT, Methodology, Team & Everyday Toolkit */}
-        <Approach onOpenContact={handleOpenContact} />
+            {/* Unified Frame 7: Services, IDEAS INTO IMPACT, Methodology, Team & Everyday Toolkit */}
+            <Approach onOpenContact={handleOpenContact} />
 
-        {/* Let's Make It Happen CTA */}
-        <CTASection onOpenContact={handleOpenContact} />
-      </main>
+            {/* Let's Make It Happen CTA */}
+            <CTASection onOpenContact={handleOpenContact} />
+          </main>
 
-      {/* Footer */}
-      <Footer onOpenContact={handleOpenContact} />
+          {/* Homepage Footer */}
+          <Footer onOpenContact={handleOpenContact} />
+        </>
+      )}
 
       {/* Interactive Contact / Audit Modal */}
       <ContactModal 

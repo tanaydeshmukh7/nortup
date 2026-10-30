@@ -19,6 +19,18 @@ export default {
           card: "#15100E",
           surface: "#1E1613",
           pill: "#241A16",
+        },
+        arulis: {
+          forest: "#0F3D2E",
+          sage: "#6B8F71",
+          ivory: "#FDFBF7",
+          cream: "#F6F3EC",
+          stone: "#ECE7DE",
+          gold: "#D4AF37",
+          goldMuted: "#B89730",
+          charcoal: "#1A1D1A",
+          dark: "#0A241B",
+          darker: "#061711",
         }
       },
       fontFamily: {
@@ -28,6 +40,8 @@ export default {
         anton: ["'Anton'", "sans-serif"],
         hammer: ["'Hammersmith One'", "sans-serif"],
         inter: ["'Inter'", "sans-serif"],
+        playfair: ["'Playfair Display'", "serif"],
+        montserrat: ["'Montserrat'", "sans-serif"],
       },
       keyframes: {
         marquee: {

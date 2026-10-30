@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
-export default function Navbar({ onOpenContact }) {
+export default function Navbar({ onOpenContact, onNavigate, currentRoute = "/" }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const shouldReduceMotion = useReducedMotion()
@@ -40,6 +40,25 @@ export default function Navbar({ onOpenContact }) {
     }
   }, [mobileMenuOpen])
 
+  // Navigation helper for logo and links
+  const handleLinkClick = (e, target) => {
+    if (currentRoute && currentRoute !== '/') {
+      e.preventDefault()
+      if (onNavigate) {
+        onNavigate(target)
+      }
+    }
+  }
+
+  const handleLogoClick = (e) => {
+    e.preventDefault()
+    if (onNavigate) {
+      onNavigate('/')
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
     <motion.header 
       ref={navRef}
@@ -56,7 +75,8 @@ export default function Navbar({ onOpenContact }) {
         
         {/* Left: Northup Studio Brand Logo (Enlarged & Clearly Legible) */}
         <a 
-          href="#" 
+          href="/" 
+          onClick={handleLogoClick}
           data-cursor="hover"
           className="flex items-center gap-2 transition-opacity duration-200 hover:opacity-90 flex-shrink-0 py-1"
         >
@@ -71,6 +91,7 @@ export default function Navbar({ onOpenContact }) {
         <div className="hidden md:flex items-center gap-8 lg:gap-14">
           <a 
             href="#work" 
+            onClick={(e) => handleLinkClick(e, '/#work')}
             data-cursor="hover"
             className="font-keania text-[18px] lg:text-[22px] text-white hover:text-[#ff7c00] tracking-wider transition-colors duration-200 uppercase"
           >
@@ -78,6 +99,7 @@ export default function Navbar({ onOpenContact }) {
           </a>
           <a 
             href="#services" 
+            onClick={(e) => handleLinkClick(e, '/#services')}
             data-cursor="hover"
             className="font-keania text-[18px] lg:text-[22px] text-white hover:text-[#ff7c00] tracking-wider transition-colors duration-200 uppercase"
           >
@@ -85,6 +107,7 @@ export default function Navbar({ onOpenContact }) {
           </a>
           <a 
             href="#about" 
+            onClick={(e) => handleLinkClick(e, '/#about')}
             data-cursor="hover"
             className="font-keania text-[18px] lg:text-[22px] text-white hover:text-[#ff7c00] tracking-wider transition-colors duration-200 uppercase"
           >
@@ -148,21 +171,21 @@ export default function Navbar({ onOpenContact }) {
           >
             <a 
               href="#work" 
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => { setMobileMenuOpen(false); handleLinkClick(e, '/#work'); }}
               className="font-keania text-[20px] text-white hover:text-[#ff7c00] tracking-wider py-1"
             >
               WORK
             </a>
             <a 
               href="#services" 
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => { setMobileMenuOpen(false); handleLinkClick(e, '/#services'); }}
               className="font-keania text-[20px] text-white hover:text-[#ff7c00] tracking-wider py-1"
             >
               SERVICES
             </a>
             <a 
               href="#about" 
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => { setMobileMenuOpen(false); handleLinkClick(e, '/#about'); }}
               className="font-keania text-[20px] text-white hover:text-[#ff7c00] tracking-wider py-1"
             >
               ABOUT US

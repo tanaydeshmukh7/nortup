@@ -4,6 +4,7 @@ import { motion, useMotionValue, useSpring } from 'framer-motion'
 export default function CustomCursor() {
   const [cursorText, setCursorText] = useState('')
   const [cursorVariant, setCursorVariant] = useState('default') // 'default' | 'hover' | 'card' | 'hidden'
+  const [cursorTheme, setCursorTheme] = useState('default') // 'default' | 'arulis'
   const [isFinePointer, setIsFinePointer] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -29,6 +30,11 @@ export default function CustomCursor() {
       mouseY.set(e.clientY)
       if (!isVisible) setIsVisible(true)
 
+      // Detect cursor theme context (e.g., Arulis luxury case study)
+      const themeElement = e.target.closest('[data-cursor-theme]')
+      const theme = themeElement ? themeElement.getAttribute('data-cursor-theme') : 'default'
+      setCursorTheme(theme)
+
       // Detect cursor targets
       const target = e.target.closest('[data-cursor], button, a, [role="button"]')
       if (target) {
@@ -41,6 +47,9 @@ export default function CustomCursor() {
         } else if (customType === 'explore') {
           setCursorVariant('card')
           setCursorText(customLabel || 'EXPLORE')
+        } else if (customType === 'none') {
+          setCursorVariant('hidden')
+          setCursorText('')
         } else {
           setCursorVariant('hover')
           setCursorText('')
@@ -75,16 +84,22 @@ export default function CustomCursor() {
 
   if (!isFinePointer || !isVisible) return null
 
+  const isArulis = cursorTheme === 'arulis'
+
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none">
       {/* 1. Precise Center Dot (moves immediately with mouse) */}
       <motion.div
-        className="fixed top-0 left-0 w-2 h-2 rounded-full bg-[#FF4D0A] shadow-[0_0_8px_#FF4D0A]"
+        className="fixed top-0 left-0 w-2 h-2 rounded-full"
         style={{
           x: mouseX,
           y: mouseY,
           translateX: '-50%',
           translateY: '-50%',
+          backgroundColor: isArulis ? '#D4AF37' : '#FF4D0A',
+          boxShadow: isArulis 
+            ? '0 0 10px rgba(212, 175, 55, 0.7)' 
+            : '0 0 8px #FF4D0A',
         }}
         animate={{
           scale: cursorVariant === 'card' ? 0 : cursorVariant === 'hover' ? 1.5 : 1,
@@ -95,7 +110,7 @@ export default function CustomCursor() {
 
       {/* 2. Inertial Follower Ring / Badge */}
       <motion.div
-        className="fixed top-0 left-0 rounded-full flex items-center justify-center font-mono font-bold uppercase"
+        className="fixed top-0 left-0 rounded-full flex items-center justify-center font-mono font-bold uppercase tracking-wider text-center"
         style={{
           x: smoothX,
           y: smoothY,
@@ -103,20 +118,24 @@ export default function CustomCursor() {
           translateY: '-50%',
         }}
         animate={{
-          width: cursorVariant === 'card' ? 84 : cursorVariant === 'hover' ? 44 : 32,
-          height: cursorVariant === 'card' ? 84 : cursorVariant === 'hover' ? 44 : 32,
+          width: cursorVariant === 'card' 
+            ? (isArulis ? 72 : 84) 
+            : cursorVariant === 'hover' ? 44 : 32,
+          height: cursorVariant === 'card' 
+            ? (isArulis ? 72 : 84) 
+            : cursorVariant === 'hover' ? 44 : 32,
           backgroundColor:
             cursorVariant === 'card'
-              ? 'rgba(255, 77, 10, 0.92)'
+              ? (isArulis ? 'rgba(10, 36, 27, 0.94)' : 'rgba(255, 77, 10, 0.92)')
               : cursorVariant === 'hover'
-              ? 'rgba(255, 135, 56, 0.15)'
-              : 'rgba(255, 255, 255, 0.04)',
+              ? (isArulis ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255, 135, 56, 0.15)')
+              : (isArulis ? 'rgba(15, 61, 46, 0.08)' : 'rgba(255, 255, 255, 0.04)'),
           borderColor:
             cursorVariant === 'card'
-              ? 'rgba(255, 255, 255, 0.6)'
+              ? (isArulis ? 'rgba(212, 175, 55, 0.8)' : 'rgba(255, 255, 255, 0.6)')
               : cursorVariant === 'hover'
-              ? 'rgba(255, 77, 10, 0.8)'
-              : 'rgba(255, 255, 255, 0.35)',
+              ? (isArulis ? 'rgba(212, 175, 55, 0.7)' : 'rgba(255, 77, 10, 0.8)')
+              : (isArulis ? 'rgba(15, 61, 46, 0.3)' : 'rgba(255, 255, 255, 0.35)'),
           borderWidth: cursorVariant === 'card' ? 1 : 1.5,
           scale: cursorVariant === 'hidden' ? 0 : 1,
           opacity: cursorVariant === 'hidden' ? 0 : 1,
@@ -132,7 +151,9 @@ export default function CustomCursor() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="text-white text-[11px] tracking-widest text-center px-1 font-bold drop-shadow-sm"
+            className={`text-[10px] sm:text-[11px] tracking-widest text-center px-1 font-bold drop-shadow-sm ${
+              isArulis ? 'text-[#FAF8F5]' : 'text-white'
+            }`}
           >
             {cursorText}
           </motion.span>

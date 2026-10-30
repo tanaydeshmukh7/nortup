@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUpRight, ArrowDown, Sparkles } from 'lucide-react'
 import PosterModal from './PosterModal'
 
-export default function FeaturedWork({ onOpenContact }) {
+export default function FeaturedWork({ onOpenContact, onNavigate }) {
   const [posterModalOpen, setPosterModalOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState('ALL')
   const [hoveredId, setHoveredId] = useState(null)
@@ -51,7 +51,8 @@ export default function FeaturedWork({ onOpenContact }) {
       alt: 'Aurelis Dental Brand Identity & Platform',
       type: 'full-wide', // full 12 columns
       inquiry: 'Project Inquiry: Aurelis',
-      cursorText: 'VIEW ↗',
+      cursorText: 'CASE STUDY ↗',
+      route: '/work/arulis-dental-clinic',
     },
     {
       id: 'cake-studio',
@@ -96,8 +97,11 @@ export default function FeaturedWork({ onOpenContact }) {
     return true
   }
 
-  const handleCardClick = (project) => {
-    if (project.isPosterModal) {
+  const handleCardClick = (project, e) => {
+    if (project.route && onNavigate) {
+      if (e) e.preventDefault()
+      onNavigate(project.route)
+    } else if (project.isPosterModal) {
       setPosterModalOpen(true)
     } else {
       onOpenContact(project.inquiry)
@@ -262,9 +266,9 @@ export default function FeaturedWork({ onOpenContact }) {
             transition={{ duration: 0.4 }}
             onMouseEnter={() => setHoveredId('aurelis')}
             onMouseLeave={() => setHoveredId(null)}
-            onClick={() => handleCardClick(projects[2])}
+            onClick={(e) => handleCardClick(projects[2], e)}
             data-cursor="card"
-            data-cursor-text="VIEW ↗"
+            data-cursor-text="CASE STUDY ↗"
             className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[16/9] lg:aspect-auto lg:h-[632px] shadow-xl ${
               hoveredId && hoveredId !== 'aurelis' ? 'opacity-65 filter brightness-90' : 'opacity-100'
             }`}
