@@ -648,7 +648,7 @@ export default function Approach({ onOpenContact }) {
           5. Inner Container: Team & Everyday Toolkit (Figma Rectangle 15)
           ========================================================================
         */}
-        <div id="about" className="relative z-10 rounded-[22px] sm:rounded-[28px] p-5 sm:p-8 lg:p-10 bg-[#120D0A]/90 backdrop-blur-md border border-white/10 shadow-2xl">
+        <div id="about" className="relative z-10 rounded-[22px] sm:rounded-[28px] p-5 sm:p-8 lg:p-10 bg-[#120D0A]/90 backdrop-blur-md border border-white/10 shadow-2xl scroll-mt-28">
           
           {/* 3 Team Member Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mb-10 sm:mb-12">

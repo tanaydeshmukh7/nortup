@@ -1,6 +1,5 @@
 import React from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import Navbar from './Navbar'
 import CompassCanvas from './CompassCanvas'
 import { ArrowUpRight } from 'lucide-react'
 
@@ -39,10 +38,8 @@ export default function Hero({ onOpenContact }) {
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
 
-        {/* 1. Navbar positioned at top of Hero frame with exact Figma margins */}
-        <div className="relative z-30 w-full pt-1">
-          <Navbar onOpenContact={onOpenContact} />
-        </div>
+        {/* 1. Top Spacer matching fixed viewport navbar height & padding */}
+        <div className="relative z-10 w-full h-[64px] sm:h-[84px] pointer-events-none select-none" aria-hidden="true" />
 
         {/* 2. Main Hero Body */}
         <div className="relative z-20 w-full px-5 sm:px-10 lg:px-14 flex-1 flex flex-col items-start justify-center pt-3 sm:pt-6 lg:pt-0 lg:my-auto">

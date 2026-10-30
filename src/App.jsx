@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Lenis from 'lenis'
+import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Ticker from './components/Ticker'
 import FeaturedWork from './components/FeaturedWork'
@@ -46,7 +47,7 @@ export default function App() {
       const targetElement = document.querySelector(href)
       if (targetElement) {
         e.preventDefault()
-        lenis.scrollTo(targetElement, { offset: -24, duration: 1.2 })
+        lenis.scrollTo(targetElement, { offset: -96, duration: 1.2 })
       }
     }
 
@@ -79,9 +80,12 @@ export default function App() {
       {/* Desktop Custom Cursor */}
       <CustomCursor />
 
+      {/* Fixed Viewport Floating Navbar (Persistent across entire website) */}
+      <Navbar onOpenContact={handleOpenContact} />
+
       {/* Main Content Sections */}
       <main className="w-full">
-        {/* Hero Section (Contains Integrated Navbar & Exact Figma Frame) */}
+        {/* Hero Section */}
         <Hero onOpenContact={handleOpenContact} />
 
         {/* Ticker / Moving Forward Section */}

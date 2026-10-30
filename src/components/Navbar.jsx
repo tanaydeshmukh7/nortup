@@ -4,8 +4,19 @@ import { Menu, X } from 'lucide-react'
 
 export default function Navbar({ onOpenContact }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const shouldReduceMotion = useReducedMotion()
   const navRef = useRef(null)
+
+  // Track window scroll to subtly adjust backdrop blur and border when scrolling over content
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Close mobile menu on Escape key or click outside
   useEffect(() => {
@@ -35,9 +46,13 @@ export default function Navbar({ onOpenContact }) {
       initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
-      className="relative w-full flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-1 sm:pb-2 select-none z-30"
+      className="fixed top-0 left-0 right-0 w-full z-50 flex justify-center px-3 sm:px-6 pt-2.5 sm:pt-4 select-none pointer-events-none"
     >
-      <nav className="relative w-full max-w-[1333px] h-[56px] sm:h-[72px] rounded-full bg-[#272424]/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+      <nav className={`pointer-events-auto relative w-full max-w-[1333px] h-[56px] sm:h-[72px] rounded-full px-4 sm:px-8 flex items-center justify-between transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-[#181414]/95 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.65)]' 
+          : 'bg-[#272424]/90 backdrop-blur-md border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.5)]'
+      }`}>
         
         {/* Left: Northup Studio Brand Logo (Enlarged & Clearly Legible) */}
         <a 
@@ -129,7 +144,7 @@ export default function Navbar({ onOpenContact }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="sm:hidden absolute top-[calc(100%+6px)] left-3 right-3 bg-[#1c1818]/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 z-50"
+            className="pointer-events-auto sm:hidden absolute top-[calc(100%+8px)] left-3 right-3 bg-[#1c1818]/95 backdrop-blur-2xl border border-white/15 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 z-50"
           >
             <a 
               href="#work" 
