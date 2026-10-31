@@ -42,6 +42,9 @@ export default {
         inter: ["'Inter'", "sans-serif"],
         playfair: ["'Playfair Display'", "serif"],
         montserrat: ["'Montserrat'", "sans-serif"],
+        syne: ["'Syne'", "sans-serif"],
+        oswald: ["'Oswald'", "sans-serif"],
+        jetbrains: ["'JetBrains Mono'", "monospace"],
       },
       keyframes: {
         marquee: {

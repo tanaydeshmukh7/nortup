@@ -84,10 +84,11 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       categoryTag: 'Web design & development',
       category: 'WEB',
       image: '/assets/aurex.jpg',
-      alt: 'AUREX Automotive Web Architecture',
+      alt: 'AUREX Performance Club Digital Experience',
       type: 'grid-3',
       inquiry: 'Project Inquiry: AUREX',
-      cursorText: 'VIEW ↗',
+      cursorText: 'CASE STUDY ↗',
+      route: '/work/aurex-performance-club',
     },
   ]
 

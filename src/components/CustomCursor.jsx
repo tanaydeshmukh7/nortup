@@ -87,6 +87,7 @@ export default function CustomCursor() {
   const isArulis = cursorTheme === 'arulis'
   const isAtelier = cursorTheme === 'atelier'
   const isMaison = cursorTheme === 'maison'
+  const isAurex = cursorTheme === 'aurex'
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none">
@@ -98,9 +99,11 @@ export default function CustomCursor() {
           y: mouseY,
           translateX: '-50%',
           translateY: '-50%',
-          backgroundColor: isArulis ? '#D4AF37' : isAtelier ? '#9B5D3E' : isMaison ? '#B87F83' : '#FF4D0A',
-          boxShadow: isArulis 
-            ? '0 0 10px rgba(212, 175, 55, 0.7)' 
+          backgroundColor: isAurex ? '#C6FF00' : isArulis ? '#D4AF37' : isAtelier ? '#9B5D3E' : isMaison ? '#B87F83' : '#FF4D0A',
+          boxShadow: isAurex
+            ? '0 0 12px rgba(198, 255, 0, 0.9)'
+            : isArulis
+            ? '0 0 10px rgba(212, 175, 55, 0.7)'
             : isAtelier
             ? '0 0 10px rgba(155, 93, 62, 0.7)'
             : isMaison
@@ -132,16 +135,16 @@ export default function CustomCursor() {
             : cursorVariant === 'hover' ? 44 : 32,
           backgroundColor:
             cursorVariant === 'card'
-              ? (isArulis ? 'rgba(10, 36, 27, 0.94)' : isAtelier ? 'rgba(26, 23, 21, 0.94)' : isMaison ? 'rgba(57, 42, 39, 0.94)' : 'rgba(255, 77, 10, 0.92)')
+              ? (isAurex ? 'rgba(9, 10, 9, 0.96)' : isArulis ? 'rgba(10, 36, 27, 0.94)' : isAtelier ? 'rgba(26, 23, 21, 0.94)' : isMaison ? 'rgba(57, 42, 39, 0.94)' : 'rgba(255, 77, 10, 0.92)')
               : cursorVariant === 'hover'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.12)' : isAtelier ? 'rgba(155, 93, 62, 0.15)' : isMaison ? 'rgba(184, 127, 131, 0.15)' : 'rgba(255, 135, 56, 0.15)')
-              : (isArulis ? 'rgba(15, 61, 46, 0.08)' : isAtelier ? 'rgba(155, 93, 62, 0.08)' : isMaison ? 'rgba(184, 127, 131, 0.08)' : 'rgba(255, 255, 255, 0.04)'),
+              ? (isAurex ? 'rgba(198, 255, 0, 0.18)' : isArulis ? 'rgba(212, 175, 55, 0.12)' : isAtelier ? 'rgba(155, 93, 62, 0.15)' : isMaison ? 'rgba(184, 127, 131, 0.15)' : 'rgba(255, 135, 56, 0.15)')
+              : (isAurex ? 'rgba(198, 255, 0, 0.06)' : isArulis ? 'rgba(15, 61, 46, 0.08)' : isAtelier ? 'rgba(155, 93, 62, 0.08)' : isMaison ? 'rgba(184, 127, 131, 0.08)' : 'rgba(255, 255, 255, 0.04)'),
           borderColor:
             cursorVariant === 'card'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.8)' : isAtelier ? 'rgba(155, 93, 62, 0.8)' : isMaison ? 'rgba(232, 201, 200, 0.8)' : 'rgba(255, 255, 255, 0.6)')
+              ? (isAurex ? 'rgba(198, 255, 0, 0.95)' : isArulis ? 'rgba(212, 175, 55, 0.8)' : isAtelier ? 'rgba(155, 93, 62, 0.8)' : isMaison ? 'rgba(232, 201, 200, 0.8)' : 'rgba(255, 255, 255, 0.6)')
               : cursorVariant === 'hover'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.7)' : isAtelier ? 'rgba(155, 93, 62, 0.7)' : isMaison ? 'rgba(184, 127, 131, 0.7)' : 'rgba(255, 77, 10, 0.8)')
-              : (isArulis ? 'rgba(15, 61, 46, 0.3)' : isAtelier ? 'rgba(155, 93, 62, 0.3)' : isMaison ? 'rgba(184, 127, 131, 0.3)' : 'rgba(255, 255, 255, 0.35)'),
+              ? (isAurex ? 'rgba(198, 255, 0, 0.85)' : isArulis ? 'rgba(212, 175, 55, 0.7)' : isAtelier ? 'rgba(155, 93, 62, 0.7)' : isMaison ? 'rgba(184, 127, 131, 0.7)' : 'rgba(255, 77, 10, 0.8)')
+              : (isAurex ? 'rgba(198, 255, 0, 0.35)' : isArulis ? 'rgba(15, 61, 46, 0.3)' : isAtelier ? 'rgba(155, 93, 62, 0.3)' : isMaison ? 'rgba(184, 127, 131, 0.3)' : 'rgba(255, 255, 255, 0.35)'),
           borderWidth: cursorVariant === 'card' ? 1 : 1.5,
           scale: cursorVariant === 'hidden' ? 0 : 1,
           opacity: cursorVariant === 'hidden' ? 0 : 1,

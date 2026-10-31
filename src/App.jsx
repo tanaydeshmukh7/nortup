@@ -12,6 +12,7 @@ import CustomCursor from './components/CustomCursor'
 import ArulisCaseStudy from './pages/ArulisCaseStudy'
 import AtelierCaseStudy from './pages/AtelierCaseStudy'
 import MaisonCaseStudy from './pages/MaisonCaseStudy'
+import AurexCaseStudy from './pages/AurexCaseStudy'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
@@ -23,9 +24,11 @@ export default function App() {
       if (path === '/work/arulis-dental-clinic') return path
       if (path === '/work/atelier-estates') return path
       if (path === '/work/maison-de-sucre') return path
+      if (path === '/work/aurex-performance-club') return path
       if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
       if (window.location.hash.includes('work/atelier-estates')) return '/work/atelier-estates'
       if (window.location.hash.includes('work/maison-de-sucre')) return '/work/maison-de-sucre'
+      if (window.location.hash.includes('work/aurex-performance-club')) return '/work/aurex-performance-club'
       return path
     }
     return '/'
@@ -89,6 +92,8 @@ export default function App() {
         nextRoute = '/work/atelier-estates'
       } else if (window.location.hash.includes('work/maison-de-sucre')) {
         nextRoute = '/work/maison-de-sucre'
+      } else if (window.location.hash.includes('work/aurex-performance-club')) {
+        nextRoute = '/work/aurex-performance-club'
       }
       setCurrentRoute(nextRoute)
 
@@ -177,6 +182,10 @@ export default function App() {
     currentRoute === '/work/maison-de-sucre' || 
     currentRoute.startsWith('/work/maison-de-sucre')
 
+  const isAurexCaseStudy = 
+    currentRoute === '/work/aurex-performance-club' || 
+    currentRoute.startsWith('/work/aurex-performance-club')
+
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
       {/* Desktop Custom Cursor */}
@@ -207,6 +216,13 @@ export default function App() {
       ) : isMaisonCaseStudy ? (
         <main className="w-full">
           <MaisonCaseStudy 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+          />
+        </main>
+      ) : isAurexCaseStudy ? (
+        <main className="w-full">
+          <AurexCaseStudy 
             onNavigate={handleNavigate}
             onOpenContact={handleOpenContact}
           />
