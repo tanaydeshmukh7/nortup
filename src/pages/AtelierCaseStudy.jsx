@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { 
   ArrowLeft, 
@@ -18,9 +18,17 @@ import {
   Smartphone,
   ChevronDown,
   Building2,
-  Clock
+  Clock,
+  Lock,
+  Globe,
+  RefreshCw,
+  Eye,
+  Maximize2
 } from 'lucide-react'
 import Footer from '../components/Footer'
+
+// Centralized Live Project URL (Single Source of Truth)
+const ATELIER_LIVE_URL = 'https://atelier-estates-alpha.vercel.app/'
 
 export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
   const shouldReduceMotion = useReducedMotion()
@@ -30,6 +38,11 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
   
   // Active material study layer
   const [activeMaterial, setActiveMaterial] = useState('travertine')
+
+  // Website preview mode: 'interactive' (live iframe) or 'studio' (5K visual render)
+  const [previewMode, setPreviewMode] = useState('interactive')
+  const [iframeKey, setIframeKey] = useState(0)
+  const [iframeLoading, setIframeLoading] = useState(true)
 
   // Advisory form state
   const [formState, setFormState] = useState({
@@ -41,12 +54,12 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
   })
   const [formSubmitted, setFormSubmitted] = useState(false)
 
-  // Scroll to top on load
+  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
-  // Material Study Layers data
+  // Material Study Layers data (Matching Figma Screen 2/3)
   const materialLayers = [
     {
       id: 'travertine',
@@ -107,6 +120,11 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
     }
   }
 
+  const reloadIframe = () => {
+    setIframeLoading(true)
+    setIframeKey(prev => prev + 1)
+  }
+
   return (
     <div 
       data-cursor-theme="atelier"
@@ -115,7 +133,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
       
       {/* 
         ========================================================================
-        TOP BREADCRUMB NAVIGATION
+        TOP BREADCRUMB & DIRECT LIVE SITE BAR
         ========================================================================
       */}
       <nav aria-label="Breadcrumb" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
@@ -132,13 +150,29 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             <span>BACK TO FEATURED WORK</span>
           </button>
 
-          {/* Breadcrumb path & Case Study Number */}
-          <div className="flex items-center gap-3 font-mono text-[11px] sm:text-[12px] text-[#718096]">
-            <span className="hidden sm:inline">NORTHUP STUDIO</span>
-            <span className="hidden sm:inline">&middot;</span>
-            <span className="text-[#9B5D3E] font-semibold">ATELIER ESTATES</span>
-            <span>&middot;</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#9B5D3E]/10 text-[#9B5D3E] font-bold">01 / 06</span>
+          {/* Breadcrumb path & Direct Live Link pill */}
+          <div className="flex items-center gap-3 sm:gap-4 font-mono text-[11px] sm:text-[12px]">
+            <div className="hidden sm:flex items-center gap-2 text-[#718096]">
+              <span>NORTHUP STUDIO</span>
+              <span>&middot;</span>
+              <span className="text-[#9B5D3E] font-semibold">ATELIER ESTATES</span>
+              <span>&middot;</span>
+              <span className="px-2 py-0.5 rounded-full bg-[#9B5D3E]/10 text-[#9B5D3E] font-bold">01 / 06</span>
+            </div>
+
+            {/* Quick Live Website Pill */}
+            <a
+              href={ATELIER_LIVE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Explore live Atelier Estates website (opens in a new tab)"
+              data-cursor="hover"
+              className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1E1B18] hover:bg-[#9B5D3E] text-[#F6F2EA] text-[11px] font-bold tracking-wider transition-all duration-200 shadow-sm"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              <span>LIVE SITE</span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-[#D8CDBC] group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
           </div>
 
         </div>
@@ -147,6 +181,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
       {/* 
         ========================================================================
         SECTION 01 — THE FLAGSHIP CINEMATIC HERO: ATELIER ESTATES
+        Includes High-Priority Primary Live Website CTA in Initial Viewport
         ========================================================================
       */}
       <header className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 sm:mb-24">
@@ -158,7 +193,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 font-mono text-[#9B5D3E] text-[11px] sm:text-[12px] font-semibold tracking-widest uppercase mb-4 px-3.5 py-1 rounded-full bg-[#9B5D3E]/10 border border-[#9B5D3E]/20"
+            className="inline-flex items-center gap-2 font-mono text-[#9B5D3E] text-[11px] sm:text-[12px] font-semibold tracking-widest uppercase mb-4 px-3.5 py-1.5 rounded-full bg-[#9B5D3E]/10 border border-[#9B5D3E]/20"
           >
             <Building2 className="w-3.5 h-3.5 text-[#9B5D3E]" />
             <span>WEBSITE DESIGN &amp; DEVELOPMENT · ARCHITECTURAL RESIDENCES</span>
@@ -168,7 +203,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-playfair text-[44px] sm:text-[68px] lg:text-[88px] font-normal text-[#1E1B18] tracking-tight leading-[0.96] mb-6"
+            className="font-playfair text-[44px] sm:text-[68px] lg:text-[88px] font-normal text-[#1E1B18] tracking-tight leading-[0.96] mb-5"
           >
             Atelier <span className="italic font-normal text-[#9B5D3E]">Estates</span>
           </motion.h1>
@@ -176,8 +211,8 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
           <motion.p
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.18 }}
-            className="font-playfair text-[20px] sm:text-[28px] lg:text-[34px] italic text-[#554D47] max-w-[860px] leading-snug mb-6"
+            transition={{ duration: 0.6, delay: 0.16 }}
+            className="font-playfair text-[20px] sm:text-[28px] lg:text-[34px] italic text-[#554D47] max-w-[860px] leading-snug mb-5"
           >
             "Find a place that feels like yours."
           </motion.p>
@@ -185,72 +220,261 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
           <motion.p
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.24 }}
-            className="font-montserrat text-[#554D47] text-[15px] sm:text-[18px] leading-relaxed max-w-[820px]"
+            transition={{ duration: 0.6, delay: 0.22 }}
+            className="font-montserrat text-[#554D47] text-[15px] sm:text-[18px] leading-relaxed max-w-[820px] mb-8"
           >
             A considered digital collection of homes shaped by light, material, and landscape. 
             Northup Studio crafted Atelier Estates as an architectural monograph in motion — marrying bespoke editorial typography with private advisory infrastructure across Mayfair, Enge, and Chelsea.
           </motion.p>
 
+          {/* 
+            ====================================================================
+            PROMINENT PRIMARY LIVE WEBSITE CTA BLOCK (INITIAL VIEWPORT)
+            - Exact CTA text: EXPLORE LIVE WEBSITE ↗
+            - Supporting microcopy: “Experience the project in its entirety.”
+            - Working link: https://atelier-estates-alpha.vercel.app/
+            - target="_blank" rel="noopener noreferrer"
+            ====================================================================
+          */}
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.28 }}
+            className="pt-2 pb-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 flex-wrap">
+              
+              {/* Distinctive Outlined/High-Contrast Button */}
+              <a
+                href={ATELIER_LIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Explore live Atelier Estates website (opens in a new tab)"
+                data-cursor="hover"
+                className="group relative inline-flex items-center justify-between sm:justify-start gap-4 px-8 py-4 sm:py-4.5 rounded-full bg-[#1E1B18] text-[#F6F2EA] hover:bg-[#9B5D3E] shadow-[0_12px_32px_rgba(30,27,24,0.22)] hover:shadow-[0_16px_40px_rgba(155,93,62,0.35)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9B5D3E] focus-visible:ring-offset-2 active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-3">
+                  {/* Live pulsating green beacon */}
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981]"></span>
+                  </span>
+                  
+                  {/* Exact CTA Text */}
+                  <span className="font-mono text-[12px] sm:text-[13px] font-bold tracking-widest uppercase text-white">
+                    EXPLORE LIVE WEBSITE ↗
+                  </span>
+                </div>
+
+                <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 text-[#D8CDBC] group-hover:text-white" />
+              </a>
+
+              {/* Supporting Microcopy */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[#718096] font-mono text-[11px] sm:text-[12px]">
+                <span className="italic text-[#554D47] font-medium">“Experience the project in its entirety.”</span>
+                <span className="hidden sm:inline text-black/25">&middot;</span>
+                <span className="text-[#9B5D3E] font-medium tracking-tight">atelier-estates-alpha.vercel.app</span>
+              </div>
+
+            </div>
+          </motion.div>
+
         </div>
 
         {/* 
-          HERO DESKTOP PRESENTATION (5K Studio Screen)
+          ======================================================================
+          DUAL-MODE WEBSITE PREVIEW CHASSIS
+          Mode 1: Interactive Live Embedded Website (Real Next.js app via iframe)
+          Mode 2: 5K Studio iMac Capture (Monograph render)
+          ======================================================================
         */}
         <motion.div
+          id="hero-preview"
           initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.28, ease: "easeOut" }}
-          className="relative rounded-[28px] sm:rounded-[40px] overflow-hidden bg-[#1A1715] border border-black/15 shadow-[0_24px_70px_rgba(26,23,21,0.2)]"
+          transition={{ duration: 0.8, delay: 0.32, ease: "easeOut" }}
+          className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden bg-[#181615] border border-black/15 shadow-[0_24px_70px_rgba(26,23,21,0.22)] flex flex-col"
         >
-          {/* Main Visual */}
-          <img
-            src="/assets/atelier.jpg"
-            alt="Atelier Estates Flagship Digital Experience on iMac"
-            className="w-full h-auto object-cover max-h-[820px]"
-            loading="eager"
-          />
-
-          {/* Vignette Layer */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
-
-          {/* Top HUD Overlay with Interactive Navigation Trigger */}
-          <div className="absolute top-4 sm:top-8 left-4 sm:left-8 right-4 sm:right-8 flex items-center justify-between text-white z-10">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] sm:text-[11px] tracking-widest uppercase px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[#D8CDBC]">
-                FLAGSHIP WEB ARCHITECTURE
-              </span>
-              <span className="font-mono text-[10px] sm:text-[11px] tracking-widest uppercase px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hidden sm:inline-block">
-                MAYFAIR · ENGE · CHELSEA
-              </span>
-            </div>
-
-            {/* Interactive Menu Trigger Button */}
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              data-cursor="hover"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white font-mono text-[11px] font-semibold tracking-wider uppercase transition-all duration-200"
-            >
-              <Menu className="w-4 h-4 text-[#D8CDBC]" />
-              <span>PREVIEW DRAWER</span>
-            </button>
-          </div>
-
-          {/* Bottom Caption */}
-          <div className="absolute bottom-6 sm:bottom-10 left-6 sm:left-10 right-6 sm:right-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white z-10">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-[#D8CDBC] font-mono text-[11px] font-semibold tracking-wider uppercase mb-2">
-                <span>ATELIER ESTATES / ARCHITECTURAL RESIDENCES</span>
+          
+          {/* Top Browser Chassis Chrome */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-[#23201D] border-b border-white/10 z-20">
+            
+            {/* macOS Style Window Dots & Live Status */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-[#E06C75]/80 inline-block" />
+                <span className="w-3 h-3 rounded-full bg-[#E5C07B]/80 inline-block" />
+                <span className="w-3 h-3 rounded-full bg-[#98C379]/80 inline-block" />
               </div>
-              <h2 className="font-playfair text-[24px] sm:text-[36px] leading-tight">
-                Find a place that feels like yours.
-              </h2>
+
+              <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-white/10">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                <span className="font-mono text-[10px] text-white/70 uppercase tracking-widest font-semibold">
+                  VERCEL EDGE
+                </span>
+              </div>
             </div>
-            <p className="font-mono text-[11px] sm:text-[12px] text-white/70 max-w-[360px] text-left sm:text-right">
-              FIG. 01 — Full-bleed architectural photography and low-contrast typography establish a serene, monograph-grade browsing environment.
-            </p>
+
+            {/* Browser Address Bar Pill (Opens Live Site Directly) */}
+            <a
+              href={ATELIER_LIVE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open atelier-estates-alpha.vercel.app in new window"
+              data-cursor="hover"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/10 hover:border-white/20 text-[#D8CDBC] hover:text-white transition-all text-[11px] font-mono group"
+            >
+              <Lock className="w-3 h-3 text-[#10B981]" />
+              <span className="tracking-tight">https://atelier-estates-alpha.vercel.app/</span>
+              <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+            </a>
+
+            {/* Mode Switcher & Direct Controls */}
+            <div className="flex items-center gap-2">
+              
+              {/* Mode Toggle Buttons */}
+              <div className="flex items-center bg-black/50 p-1 rounded-full border border-white/10 text-[10px] font-mono">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('interactive')}
+                  className={`px-3 py-1 rounded-full font-semibold transition-all ${
+                    previewMode === 'interactive'
+                      ? 'bg-[#9B5D3E] text-white shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  LIVE PREVIEW
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('studio')}
+                  className={`px-3 py-1 rounded-full font-semibold transition-all ${
+                    previewMode === 'studio'
+                      ? 'bg-[#9B5D3E] text-white shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  STUDIO RENDER
+                </button>
+              </div>
+
+              {/* Refresh / Menu Drawer Action */}
+              {previewMode === 'interactive' ? (
+                <button
+                  type="button"
+                  onClick={reloadIframe}
+                  title="Reload Live View"
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(true)}
+                  data-cursor="hover"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white font-mono text-[10px] font-semibold tracking-wider uppercase transition-colors"
+                >
+                  <Menu className="w-3.5 h-3.5 text-[#D8CDBC]" />
+                  <span className="hidden sm:inline">DRAWER</span>
+                </button>
+              )}
+
+            </div>
+
           </div>
+
+          {/* Preview Viewport Canvas */}
+          <div className="relative w-full bg-[#12100F] min-h-[500px] sm:min-h-[660px] lg:min-h-[760px] flex items-center justify-center overflow-hidden">
+            
+            {previewMode === 'interactive' ? (
+              /* REAL INTERACTIVE EMBEDDED IFRAME */
+              <div className="relative w-full h-[520px] sm:h-[680px] lg:h-[780px] bg-white">
+                
+                {iframeLoading && (
+                  <div className="absolute inset-0 bg-[#171514] flex flex-col items-center justify-center text-white z-10 space-y-3">
+                    <div className="w-8 h-8 rounded-full border-2 border-[#9B5D3E] border-t-transparent animate-spin" />
+                    <p className="font-mono text-[11px] text-[#D8CDBC] tracking-widest uppercase">
+                      CONNECTING TO ATELIER ESTATES LIVE...
+                    </p>
+                  </div>
+                )}
+
+                <iframe
+                  key={iframeKey}
+                  src={ATELIER_LIVE_URL}
+                  title="Atelier Estates Live Project Website"
+                  onLoad={() => setIframeLoading(false)}
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                />
+
+                {/* Subtle Interactive Instruction Bar */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none hidden sm:flex items-center gap-2 px-3.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-white font-mono text-[10px] tracking-wider uppercase shadow-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                  <span>INTERACTIVE WINDOW · SCROLL &amp; EXPLORE FREELY</span>
+                </div>
+              </div>
+            ) : (
+              /* HIGH-RESOLUTION 5K STUDIO RENDER */
+              <div className="relative w-full h-full">
+                <img
+                  src="/assets/atelier.jpg"
+                  alt="Atelier Estates Flagship Digital Experience on iMac"
+                  className="w-full h-auto object-cover max-h-[820px]"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
+
+                {/* Interactive Menu Trigger Overlay */}
+                <div className="absolute top-4 sm:top-8 left-4 sm:left-8 right-4 sm:right-8 flex items-center justify-between text-white z-10">
+                  <span className="font-mono text-[10px] sm:text-[11px] tracking-widest uppercase px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[#D8CDBC]">
+                    5K MONOGRAPH ARCHIVE
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen(true)}
+                    data-cursor="hover"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white font-mono text-[11px] font-semibold tracking-wider uppercase transition-all duration-200"
+                  >
+                    <Menu className="w-4 h-4 text-[#D8CDBC]" />
+                    <span>PREVIEW DRAWER</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Bottom Chassis HUD Bar with Direct CTA */}
+          <div className="px-5 sm:px-8 py-4 sm:py-5 bg-[#1F1C1A] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-white z-10">
+            <div>
+              <div className="inline-flex items-center gap-2 text-[#D8CDBC] font-mono text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                <span>ATELIER ESTATES / NORTHUP STUDIO PRODUCTION</span>
+              </div>
+              <h3 className="font-playfair text-[20px] sm:text-[24px] leading-tight text-white">
+                Find a place that feels like yours.
+              </h3>
+            </div>
+
+            {/* Quick Action Button to open in new tab */}
+            <div className="flex items-center gap-4">
+              <a
+                href={ATELIER_LIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open live website in full window"
+                data-cursor="hover"
+                className="group inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-[#9B5D3E] hover:bg-[#B36E49] text-white font-mono text-[11px] sm:text-[12px] font-bold tracking-wider uppercase transition-all shadow-md active:scale-95"
+              >
+                <span>OPEN FULL WINDOW</span>
+                <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+            </div>
+          </div>
+
         </motion.div>
 
       </header>
@@ -304,7 +528,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
                 {/* Nav Links (01 Properties, 02 Architecture, 03 About, 04 Contact) */}
                 <nav className="divide-y divide-black/10 my-6">
                   {[
-                    { num: '01', title: 'Properties', target: '#hero-screen' },
+                    { num: '01', title: 'Properties', target: '#hero-preview' },
                     { num: '02', title: 'Architecture', target: '#material-study' },
                     { num: '03', title: 'About', target: '#point-of-view' },
                     { num: '04', title: 'Contact', target: '#advisory-desk' },
@@ -333,6 +557,23 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
                     </a>
                   ))}
                 </nav>
+
+                {/* Direct Live Website Link Inside Drawer */}
+                <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-sm mb-4">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#9B5D3E] font-bold block mb-1">
+                    PRODUCTION LINK
+                  </span>
+                  <a
+                    href={ATELIER_LIVE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-cursor="hover"
+                    className="font-mono text-[12px] font-semibold text-[#1E1B18] hover:text-[#9B5D3E] flex items-center justify-between"
+                  >
+                    <span>EXPLORE LIVE WEBSITE</span>
+                    <ArrowUpRight className="w-4 h-4 text-[#9B5D3E]" />
+                  </a>
+                </div>
               </div>
 
               {/* Bottom Actions & Desks */}
@@ -461,6 +702,21 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
               </div>
 
               <div>
+                <dt className="text-[#A0AEC0] uppercase tracking-wider text-[10px]">Live Project URL</dt>
+                <dd className="mt-0.5">
+                  <a
+                    href={ATELIER_LIVE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#9B5D3E] hover:underline text-[12px]"
+                  >
+                    <span>atelier-estates-alpha.vercel.app</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </a>
+                </dd>
+              </div>
+
+              <div>
                 <dt className="text-[#A0AEC0] uppercase tracking-wider text-[10px]">Advisory Hubs</dt>
                 <dd className="font-semibold text-[#1E1B18] text-[13px] mt-0.5">Mayfair (London) · Enge (Zurich) · Chelsea (NYC)</dd>
               </div>
@@ -471,9 +727,9 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
               </div>
 
               <div>
-                <dt className="text-[#A0AEC0] uppercase tracking-wider text-[10px]">Scope of Deliverables</dt>
+                <dt className="text-[#A0AEC0] uppercase tracking-wider text-[10px]">Stack &amp; Frameworks</dt>
                 <dd className="font-semibold text-[#1E1B18] text-[13px] mt-0.5 leading-snug">
-                  Brand Architecture, Digital Flagship UI/UX, Front-End Development, Material Monograph &amp; Private Advisory Portal
+                  Next.js App Router, Tailwind CSS, Framer Motion, Vercel Edge
                 </dd>
               </div>
 
@@ -485,15 +741,27 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
               </div>
             </dl>
 
-            <button
-              type="button"
-              onClick={() => onOpenContact('Project Inquiry: Inspired by Atelier Estates')}
-              data-cursor="hover"
-              className="mt-6 w-full py-3.5 rounded-full bg-[#1E1B18] hover:bg-[#9B5D3E] text-white font-mono text-[12px] font-semibold tracking-wider uppercase transition-colors duration-200 flex items-center justify-center gap-2 shadow-sm"
-            >
-              <span>INQUIRE ABOUT THIS WORK</span>
-              <ArrowUpRight className="w-4 h-4 text-[#D8CDBC]" />
-            </button>
+            <div className="mt-6 pt-4 border-t border-black/10 space-y-3">
+              <a
+                href={ATELIER_LIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="hover"
+                className="w-full py-3.5 rounded-full bg-[#1E1B18] hover:bg-[#9B5D3E] text-white font-mono text-[12px] font-semibold tracking-wider uppercase transition-colors duration-200 flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>EXPLORE LIVE WEBSITE ↗</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => onOpenContact('Project Inquiry: Inspired by Atelier Estates')}
+                data-cursor="hover"
+                className="w-full py-3 rounded-full border border-black/15 hover:bg-black/5 text-[#1E1B18] font-mono text-[11px] font-semibold tracking-wider uppercase transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                <span>INQUIRE ABOUT THIS WORK</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-[#9B5D3E]" />
+              </button>
+            </div>
           </div>
 
         </div>
@@ -846,6 +1114,10 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             
             {/* Atelier Brand Intro */}
             <div>
+              <div className="inline-flex items-center gap-2 font-mono text-[#D8CDBC] text-[11px] tracking-widest uppercase mb-3">
+                <Globe className="w-3.5 h-3.5 text-[#9B5D3E]" />
+                <span>GLOBAL ADVISORY PORTFOLIO</span>
+              </div>
               <h2 className="font-playfair text-[38px] sm:text-[54px] font-normal text-white tracking-tight mb-4">
                 Atelier Estates
               </h2>
@@ -889,7 +1161,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             {/* Private Enquiries Lines */}
             <div className="pt-8 border-t border-white/15 space-y-4">
               <span className="font-mono text-[10px] uppercase tracking-widest text-[#D8CDBC] block">
-                PRIVATE ENQUIRIES
+                PRIVATE ENQUIRIES &amp; DIRECT DIGITAL DESK
               </span>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-white/10">
@@ -913,13 +1185,23 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
               </div>
             </div>
 
-            {/* Schedule Private Viewing CTA */}
-            <div>
+            {/* Schedule Private Viewing & Live Website CTAs */}
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href={ATELIER_LIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="hover"
+                className="px-8 py-4 rounded-xl bg-white hover:bg-[#D8CDBC] text-[#171514] font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 inline-flex items-center gap-2"
+              >
+                <span>EXPLORE LIVE WEBSITE ↗</span>
+              </a>
+
               <button
                 type="button"
                 onClick={scrollToAdvisory}
                 data-cursor="hover"
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#9B5D3E] hover:bg-[#854F34] text-white font-mono text-[12px] font-semibold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
+                className="px-8 py-4 rounded-xl bg-[#9B5D3E] hover:bg-[#854F34] text-white font-mono text-[12px] font-semibold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
               >
                 SCHEDULE PRIVATE VIEWING
               </button>
@@ -928,11 +1210,15 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             {/* Atelier Copyright & Disclaimer */}
             <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-[11px] text-white/50">
               <div>
-                &copy; 2026 Atelier Estates. A portfolio project by Northup Studio.
+                &copy; 2026 Atelier Estates. Curated and coded by Northup Studio.
               </div>
               <div className="flex items-center gap-4">
-                <span>Collection</span>
+                <a href={ATELIER_LIVE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  atelier-estates-alpha.vercel.app ↗
+                </a>
+                <span>&middot;</span>
                 <span>Philosophy</span>
+                <span>&middot;</span>
                 <span>Advisory</span>
               </div>
             </div>
@@ -950,17 +1236,17 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
       <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 sm:mb-24">
         <div className="p-8 sm:p-16 rounded-[28px] sm:rounded-[36px] bg-[#15100E] text-white border border-white/10 shadow-2xl relative overflow-hidden">
           
-          {/* Ambient burnt orange aura */}
+          {/* Ambient burnt bronze aura */}
           <div 
             className="absolute -top-24 -right-24 w-96 h-96 rounded-full pointer-events-none"
             style={{
-              background: 'radial-gradient(circle, rgba(255,77,10,0.2) 0%, transparent 70%)'
+              background: 'radial-gradient(circle, rgba(155,93,62,0.25) 0%, transparent 70%)'
             }}
           />
 
           <div className="relative z-10 max-w-[840px]">
-            <div className="inline-flex items-center gap-2 font-mono text-[#FF8738] text-[11px] tracking-widest uppercase mb-4 px-3 py-1 rounded-full bg-[#FF4D0A]/10 border border-[#FF4D0A]/20">
-              <Sparkles className="w-3 h-3 text-[#FF8738]" />
+            <div className="inline-flex items-center gap-2 font-mono text-[#D8CDBC] text-[11px] tracking-widest uppercase mb-4 px-3 py-1 rounded-full bg-white/10 border border-white/15">
+              <Sparkles className="w-3 h-3 text-[#9B5D3E]" />
               <span>OUTCOME &amp; IMPACT · NORTHUP STUDIO</span>
             </div>
 
@@ -968,19 +1254,46 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
               "When architecture meets considered digital pacing, the website becomes more than a portfolio — it becomes a tactile prelude to stepping inside."
             </blockquote>
 
-            <p className="font-montserrat text-white/70 text-[14px] sm:text-[15px] leading-relaxed mb-8 max-w-[680px]">
-              Explore another flagship case study by Northup Studio or commission a bespoke digital flagship for your practice.
-            </p>
+            <div className="mb-8">
+              <p className="font-montserrat text-white/70 text-[14px] sm:text-[15px] leading-relaxed max-w-[680px] mb-4">
+                Experience the real deployed web application or commission a bespoke digital flagship for your architecture practice.
+              </p>
+              
+              {/* Closing Live CTA Banner */}
+              <div className="inline-flex items-center gap-3 p-3 px-4 rounded-xl bg-white/5 border border-white/10 font-mono text-[12px]">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                <span className="text-[#D8CDBC] italic">“Experience the project in its entirety.”</span>
+                <span className="text-white/40">&middot;</span>
+                <a 
+                  href={ATELIER_LIVE_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-white font-bold hover:text-[#9B5D3E] underline decoration-[#9B5D3E] underline-offset-4 transition-colors"
+                >
+                  EXPLORE LIVE WEBSITE ↗
+                </a>
+              </div>
+            </div>
 
             <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
               <button
                 type="button"
                 onClick={() => onNavigate('/#work')}
                 data-cursor="hover"
-                className="px-6 py-3.5 rounded-full bg-white hover:bg-[#FF8738] text-black hover:text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
+                className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
               >
                 &larr; BACK TO ALL WORK
               </button>
+
+              <a
+                href={ATELIER_LIVE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="hover"
+                className="px-7 py-3.5 rounded-full bg-[#9B5D3E] hover:bg-[#B36E49] text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 flex items-center gap-2"
+              >
+                <span>EXPLORE LIVE WEBSITE ↗</span>
+              </a>
 
               <button
                 type="button"
@@ -996,9 +1309,9 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
                 type="button"
                 onClick={() => onOpenContact('Project Inquiry: Architectural Flagship')}
                 data-cursor="hover"
-                className="px-6 py-3.5 rounded-full bg-[#FF4D0A] hover:bg-[#ff6426] text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 flex items-center gap-2"
+                className="px-6 py-3.5 rounded-full bg-white hover:bg-[#9B5D3E] text-black hover:text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 flex items-center gap-2"
               >
-                <span>COMMISSION A CASE STUDY</span>
+                <span>COMMISSION WORK</span>
                 <ArrowUpRight className="w-4 h-4" />
               </button>
             </div>
