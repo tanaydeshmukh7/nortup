@@ -334,6 +334,10 @@ export default function ArulisIdCardSection() {
                     videoRef.current.playbackRate = PLAYBACK_RATE
                   }
                 }}
+                onPlaying={() => {
+                  setIsPlaying(true)
+                  setIsActivelyPlaying(true)
+                }}
                 onTimeUpdate={handleTimeUpdate}
                 onError={() => setHasError(true)}
                 className="w-full h-full object-cover object-center"
