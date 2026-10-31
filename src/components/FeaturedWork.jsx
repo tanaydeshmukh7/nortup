@@ -172,7 +172,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => handleCardClick(projects[0])}
                 data-cursor="card"
-                data-cursor-text={card.cursorText || "VIEW ↗"}
+                data-cursor-text="CASE STUDY ↗"
                 className={`${
                   matchesFilter(projects[1]) ? 'lg:col-span-8' : 'lg:col-span-12'
                 } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl ${
