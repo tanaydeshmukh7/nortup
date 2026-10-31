@@ -85,6 +85,7 @@ export default function CustomCursor() {
   if (!isFinePointer || !isVisible) return null
 
   const isArulis = cursorTheme === 'arulis'
+  const isAtelier = cursorTheme === 'atelier'
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none">
@@ -96,9 +97,11 @@ export default function CustomCursor() {
           y: mouseY,
           translateX: '-50%',
           translateY: '-50%',
-          backgroundColor: isArulis ? '#D4AF37' : '#FF4D0A',
+          backgroundColor: isArulis ? '#D4AF37' : isAtelier ? '#9B5D3E' : '#FF4D0A',
           boxShadow: isArulis 
             ? '0 0 10px rgba(212, 175, 55, 0.7)' 
+            : isAtelier
+            ? '0 0 10px rgba(155, 93, 62, 0.7)'
             : '0 0 8px #FF4D0A',
         }}
         animate={{
@@ -119,23 +122,23 @@ export default function CustomCursor() {
         }}
         animate={{
           width: cursorVariant === 'card' 
-            ? (isArulis ? 72 : 84) 
+            ? (isArulis || isAtelier ? 72 : 84) 
             : cursorVariant === 'hover' ? 44 : 32,
           height: cursorVariant === 'card' 
-            ? (isArulis ? 72 : 84) 
+            ? (isArulis || isAtelier ? 72 : 84) 
             : cursorVariant === 'hover' ? 44 : 32,
           backgroundColor:
             cursorVariant === 'card'
-              ? (isArulis ? 'rgba(10, 36, 27, 0.94)' : 'rgba(255, 77, 10, 0.92)')
+              ? (isArulis ? 'rgba(10, 36, 27, 0.94)' : isAtelier ? 'rgba(26, 23, 21, 0.94)' : 'rgba(255, 77, 10, 0.92)')
               : cursorVariant === 'hover'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255, 135, 56, 0.15)')
-              : (isArulis ? 'rgba(15, 61, 46, 0.08)' : 'rgba(255, 255, 255, 0.04)'),
+              ? (isArulis ? 'rgba(212, 175, 55, 0.12)' : isAtelier ? 'rgba(155, 93, 62, 0.15)' : 'rgba(255, 135, 56, 0.15)')
+              : (isArulis ? 'rgba(15, 61, 46, 0.08)' : isAtelier ? 'rgba(155, 93, 62, 0.08)' : 'rgba(255, 255, 255, 0.04)'),
           borderColor:
             cursorVariant === 'card'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.8)' : 'rgba(255, 255, 255, 0.6)')
+              ? (isArulis ? 'rgba(212, 175, 55, 0.8)' : isAtelier ? 'rgba(155, 93, 62, 0.8)' : 'rgba(255, 255, 255, 0.6)')
               : cursorVariant === 'hover'
-              ? (isArulis ? 'rgba(212, 175, 55, 0.7)' : 'rgba(255, 77, 10, 0.8)')
-              : (isArulis ? 'rgba(15, 61, 46, 0.3)' : 'rgba(255, 255, 255, 0.35)'),
+              ? (isArulis ? 'rgba(212, 175, 55, 0.7)' : isAtelier ? 'rgba(155, 93, 62, 0.7)' : 'rgba(255, 77, 10, 0.8)')
+              : (isArulis ? 'rgba(15, 61, 46, 0.3)' : isAtelier ? 'rgba(155, 93, 62, 0.3)' : 'rgba(255, 255, 255, 0.35)'),
           borderWidth: cursorVariant === 'card' ? 1 : 1.5,
           scale: cursorVariant === 'hidden' ? 0 : 1,
           opacity: cursorVariant === 'hidden' ? 0 : 1,
@@ -152,7 +155,7 @@ export default function CustomCursor() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             className={`text-[10px] sm:text-[11px] tracking-widest text-center px-1 font-bold drop-shadow-sm ${
-              isArulis ? 'text-[#FAF8F5]' : 'text-white'
+              isArulis || isAtelier ? 'text-[#FAF8F5]' : 'text-white'
             }`}
           >
             {cursorText}

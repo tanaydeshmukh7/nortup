@@ -26,7 +26,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'Atelier Estates Digital Experience',
       type: 'featured-wide', // lg:col-span-8
       inquiry: 'Project Inquiry: Atelier',
-      cursorText: 'VIEW ↗',
+      cursorText: 'CASE STUDY ↗',
+      route: '/work/atelier-estates',
     },
     {
       id: 'posters',

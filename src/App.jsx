@@ -10,6 +10,7 @@ import Footer from './components/Footer'
 import ContactModal from './components/ContactModal'
 import CustomCursor from './components/CustomCursor'
 import ArulisCaseStudy from './pages/ArulisCaseStudy'
+import AtelierCaseStudy from './pages/AtelierCaseStudy'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
@@ -19,7 +20,9 @@ export default function App() {
       // Check for path or hash-based routing fallback
       const path = window.location.pathname.replace(/\/$/, '') || '/'
       if (path === '/work/arulis-dental-clinic') return path
+      if (path === '/work/atelier-estates') return path
       if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
+      if (window.location.hash.includes('work/atelier-estates')) return '/work/atelier-estates'
       return path
     }
     return '/'
@@ -79,6 +82,8 @@ export default function App() {
       let nextRoute = path
       if (window.location.hash.includes('work/arulis-dental-clinic')) {
         nextRoute = '/work/arulis-dental-clinic'
+      } else if (window.location.hash.includes('work/atelier-estates')) {
+        nextRoute = '/work/atelier-estates'
       }
       setCurrentRoute(nextRoute)
 
@@ -159,6 +164,10 @@ export default function App() {
     currentRoute === '/work/arulis-dental-clinic' || 
     currentRoute.startsWith('/work/arulis-dental-clinic')
 
+  const isAtelierCaseStudy = 
+    currentRoute === '/work/atelier-estates' || 
+    currentRoute.startsWith('/work/atelier-estates')
+
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
       {/* Desktop Custom Cursor */}
@@ -175,6 +184,13 @@ export default function App() {
       {isArulisCaseStudy ? (
         <main className="w-full">
           <ArulisCaseStudy 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+          />
+        </main>
+      ) : isAtelierCaseStudy ? (
+        <main className="w-full">
+          <AtelierCaseStudy 
             onNavigate={handleNavigate}
             onOpenContact={handleOpenContact}
           />
