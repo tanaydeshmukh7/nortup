@@ -57,14 +57,15 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
     },
     {
       id: 'cake-studio',
-      title: 'Cake Studio',
+      title: 'Maison de Sucre',
       categoryTag: 'Web design & development',
       category: 'WEB',
       image: '/assets/cake-studio.jpg',
-      alt: 'Cake Studio Platform',
+      alt: 'Maison de Sucre Artisan Cake Studio Platform',
       type: 'grid-3',
-      inquiry: 'Project Inquiry: Cake Studio',
-      cursorText: 'VIEW ↗',
+      inquiry: 'Project Inquiry: Maison de Sucre',
+      cursorText: 'CASE STUDY ↗',
+      route: '/work/maison-de-sucre',
     },
     {
       id: 'drop-cult',
@@ -171,7 +172,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => handleCardClick(projects[0])}
                 data-cursor="card"
-                data-cursor-text="VIEW ↗"
+                data-cursor-text={card.cursorText || "VIEW ↗"}
                 className={`${
                   matchesFilter(projects[1]) ? 'lg:col-span-8' : 'lg:col-span-12'
                 } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl ${
@@ -316,7 +317,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                   onMouseLeave={() => setHoveredId(null)}
                   onClick={() => handleCardClick(card)}
                   data-cursor="card"
-                  data-cursor-text="VIEW ↗"
+                  data-cursor-text={card.cursorText || "VIEW ↗"}
                   className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[452/481] shadow-xl ${
                     hoveredId && !isHovered ? 'opacity-65 filter brightness-90' : 'opacity-100'
                   }`}
