@@ -350,3 +350,73 @@ export async function scheduleDiscoveryMeeting(meetingData) {
 
   return data
 }
+
+/**
+ * Retrieves paginated audit requests for the Admin Console.
+ */
+export async function getAdminAudits({
+  page = 1,
+  pageSize = 15,
+  status = 'all',
+  search = '',
+  sortOrder = 'desc',
+} = {}) {
+  const headers = await getAuthHeaders()
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+    status,
+    search: search.trim(),
+    sortOrder,
+  })
+
+  const res = await fetch(`/api/admin/audits?${params.toString()}`, {
+    method: 'GET',
+    headers,
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to fetch audit requests.')
+  }
+
+  return data
+}
+
+/**
+ * Updates an audit request's status or internal notes.
+ */
+export async function updateAuditRequest(auditId, { status, admin_notes }) {
+  const headers = await getAuthHeaders()
+  const res = await fetch('/api/admin/audits', {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ auditId, status, admin_notes }),
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update audit request.')
+  }
+
+  return data.audit
+}
+
+/**
+ * Converts an audit request into a qualified client lead in the CRM.
+ */
+export async function convertAuditToLead(auditId) {
+  const headers = await getAuthHeaders()
+  const res = await fetch('/api/admin/audits', {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ auditId, convertToLead: true }),
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to convert audit request to lead.')
+  }
+
+  return data
+}

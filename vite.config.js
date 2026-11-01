@@ -26,10 +26,14 @@ function vercelApiDevPlugin() {
           let handlerModule = null
           if (pathname === '/api/contact' || pathname === '/api/contact.js') {
             handlerModule = await import('./api/contact.js')
+          } else if (pathname === '/api/audit' || pathname === '/api/audit.js') {
+            handlerModule = await import('./api/audit.js')
           } else if (pathname === '/api/admin/auth-check' || pathname === '/api/admin/auth-check.js') {
             handlerModule = await import('./api/admin/auth-check.js')
           } else if (pathname === '/api/admin/leads' || pathname === '/api/admin/leads.js') {
             handlerModule = await import('./api/admin/leads.js')
+          } else if (pathname === '/api/admin/audits' || pathname === '/api/admin/audits.js') {
+            handlerModule = await import('./api/admin/audits.js')
           } else if (pathname === '/api/admin/notes' || pathname === '/api/admin/notes.js') {
             handlerModule = await import('./api/admin/notes.js')
           } else if (pathname === '/api/admin/communication' || pathname === '/api/admin/communication.js') {

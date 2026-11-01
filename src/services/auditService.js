@@ -87,20 +87,18 @@ export function normalizeWebsiteUrl(rawUrl) {
 }
 
 /**
- * Checks whether a production backend (Supabase or API endpoint) is configured.
+ * Checks whether the production backend is configured.
+ * Returns true as /api/audit endpoint is active.
  */
 export function isBackendConfigured() {
-  const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
-  const apiEndpoint = import.meta.env?.VITE_AUDIT_API_ENDPOINT
-  return Boolean((supabaseUrl && supabaseAnonKey) || apiEndpoint)
+  return true
 }
 
 /**
- * Submits the audit request.
- * - If Supabase or API endpoint is configured, performs real network insertion.
- * - If no backend exists yet, returns a clear configuration error without claiming success.
- * - Does not expose service-role keys or database secrets.
+ * Submits the audit request to the production /api/audit serverless endpoint.
+ * - Validates input fields client-side before sending.
+ * - Dispatches payload to /api/audit which safely saves to Supabase and sends email notifications.
+ * - Prevents exposing private database keys to the browser.
  */
 export async function submitAuditRequest(formData) {
   // Validate before submission
@@ -114,85 +112,58 @@ export async function submitAuditRequest(formData) {
   }
 
   const payload = {
-    full_name: formData.name.trim(),
-    work_email: formData.email.trim().toLowerCase(),
-    website_url: normalizeWebsiteUrl(formData.website),
-    audit_type: formData.auditType,
-    biggest_challenge: (formData.challenge || '').trim(),
-    submitted_at: new Date().toISOString(),
+    name: formData.name.trim(),
+    email: formData.email.trim().toLowerCase(),
+    website: normalizeWebsiteUrl(formData.website),
+    auditType: formData.auditType,
+    challenge: (formData.challenge || '').trim(),
     source: 'northup_studio_hero_audit',
   }
 
-  const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
-  const apiEndpoint = import.meta.env?.VITE_AUDIT_API_ENDPOINT
-
-  // Phase 1: No backend configured yet
-  if (!supabaseUrl && !supabaseAnonKey && !apiEndpoint) {
-    // Simulate brief realistic roundtrip
-    await new Promise((resolve) => setTimeout(resolve, 450))
-    return {
-      success: false,
-      backendConfigured: false,
-      code: 'BACKEND_NOT_CONFIGURED',
-      message:
-        'Backend lead storage is pending configuration for Phase 2. Your audit request has not been saved yet.',
-    }
-  }
-
-  // Phase 2: Live Supabase endpoint
   try {
-    if (supabaseUrl && supabaseAnonKey) {
-      const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/audit_requests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify(payload),
-      })
+    const response = await fetch('/api/audit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Supabase error (${response.status}): ${errorText}`)
-      }
+    const contentType = response.headers.get('content-type') || ''
+    let resData = {}
+    if (contentType.includes('application/json')) {
+      resData = await response.json()
+    } else {
+      const text = await response.text()
+      throw new Error(`Unexpected server response: ${text.substring(0, 100)}`)
+    }
 
+    if (!response.ok) {
       return {
-        success: true,
-        data: payload,
+        success: false,
+        code: resData.code || 'SUBMISSION_FAILED',
+        message:
+          resData.message ||
+          resData.error ||
+          'Failed to submit your request due to a server error. Please try again.',
+        validationErrors: resData.validationErrors || null,
       }
     }
 
-    if (apiEndpoint) {
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        throw new Error(`API error (${response.status})`)
-      }
-
-      return {
-        success: true,
-        data: payload,
-      }
+    return {
+      success: true,
+      auditId: resData.auditId,
+      message: resData.message || 'Audit request received successfully.',
+      emailDelivery: resData.emailDelivery,
+      data: payload,
     }
   } catch (err) {
     return {
       success: false,
-      backendConfigured: true,
-      code: 'SUBMISSION_FAILED',
-      message: 'Failed to submit your request due to a network or server error. Please try again.',
+      code: 'NETWORK_ERROR',
+      message:
+        'Unable to complete submission due to a connection or server error. Your entered details remain preserved below. Please try again.',
       details: err.message,
     }
-  }
-
-  return {
-    success: false,
-    message: 'Unknown submission error.',
   }
 }

@@ -533,3 +533,420 @@ export async function sendLeadEmails({ lead, siteUrl = 'https://northupstudio.ve
     results,
   }
 }
+
+/**
+ * Generates the premium, agency-branded Audit Request Admin Notification HTML email.
+ * Design: Charcoal canvas (#0C0C0C), warm card surface (#FFFFFF), orange accent (#FF8A3D).
+ */
+export function buildAuditNotificationEmail({
+  auditRequest,
+  siteUrl = 'https://northupstudio.vercel.app',
+}) {
+  const safeName = escapeHtml(auditRequest.full_name || '')
+  const safeEmail = escapeHtml(auditRequest.work_email || '')
+  const rawWebsite = auditRequest.website_url || ''
+  const safeWebsite = escapeHtml(rawWebsite)
+  const safeHref = escapeHtml(/^https?:\/\//i.test(rawWebsite) ? rawWebsite : `https://${rawWebsite}`)
+  const safeAuditType = escapeHtml(auditRequest.audit_type || '')
+  const safeChallenge = escapeHtml(auditRequest.biggest_challenge || '').replace(/\n/g, '<br />')
+  const formattedDate = formatReceivedDate(auditRequest.created_at)
+  const adminDashboardUrl = `${siteUrl.replace(/\/$/, '')}/admin`
+
+  const detailRows = []
+
+  if (safeName) {
+    detailRows.push(`
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #78736D; width: 140px; vertical-align: top;">
+          CLIENT NAME
+        </td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #111111; vertical-align: top;">
+          ${safeName}
+        </td>
+      </tr>
+    `)
+  }
+
+  if (safeEmail) {
+    detailRows.push(`
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #78736D; width: 140px; vertical-align: top;">
+          WORK EMAIL
+        </td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; color: #111111; vertical-align: top;">
+          <a href="mailto:${safeEmail}" style="color: #111111; text-decoration: underline; text-underline-offset: 3px;">${safeEmail}</a>
+        </td>
+      </tr>
+    `)
+  }
+
+  if (safeWebsite) {
+    detailRows.push(`
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #78736D; width: 140px; vertical-align: top;">
+          WEBSITE URL
+        </td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #FF8A3D; vertical-align: top;">
+          <a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color: #FF8A3D; text-decoration: underline; text-underline-offset: 3px;">${safeWebsite} &rarr;</a>
+        </td>
+      </tr>
+    `)
+  }
+
+  if (safeAuditType) {
+    detailRows.push(`
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #78736D; width: 140px; vertical-align: top;">
+          AUDIT FOCUS
+        </td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; color: #111111; vertical-align: top;">
+          ${safeAuditType}
+        </td>
+      </tr>
+    `)
+  }
+
+  detailRows.push(`
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: #78736D; width: 140px; vertical-align: top;">
+        DATE RECEIVED
+      </td>
+      <td style="padding: 12px 0; border-bottom: 1px solid #EDE9E3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 13px; color: #444444; vertical-align: top;">
+        ${formattedDate}
+      </td>
+    </tr>
+  `)
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Digital Audit Request — Northup Studio</title>
+</head>
+<body style="margin: 0; padding: 0; width: 100% !important; background-color: #0C0C0C; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0C0C0C; table-layout: fixed;">
+    <tr>
+      <td align="center" style="padding: 40px 16px 56px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);">
+          <tr>
+            <td style="padding: 32px 36px 20px 36px; border-bottom: 1px solid #EAE5DE;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left">
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #111111; text-transform: uppercase;">
+                      NORTHUP STUDIO
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 4px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #FF8A3D; background-color: rgba(255, 138, 61, 0.12); border: 1px solid rgba(255, 138, 61, 0.35); border-radius: 4px;">
+                      FREE AUDIT REQUEST
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 36px 40px 36px;">
+              <h1 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 700; line-height: 1.25; color: #111111; letter-spacing: -0.3px;">
+                You've got an audit request.
+              </h1>
+              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #555555;">
+                A new digital audit intake has arrived through your website. Review the prospective client's web presence and follow up with your initial analysis.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 28px;">
+                ${detailRows.join('')}
+              </table>
+
+              ${
+                safeChallenge
+                  ? `
+                <div style="margin-bottom: 32px; padding: 20px; background-color: #F8F6F2; border-left: 3px solid #FF8A3D; border-radius: 4px;">
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #78736D; margin-bottom: 8px;">
+                    BIGGEST CHALLENGE / GOALS
+                  </div>
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #222222;">
+                    ${safeChallenge}
+                  </div>
+                </div>
+              `
+                  : ''
+              }
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 auto 12px auto;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="border-radius: 8px; background-color: #111111;">
+                          <a href="${adminDashboardUrl}" target="_blank" style="display: inline-block; padding: 14px 34px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px; background-color: #111111;">
+                            Open in Admin Console &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 580px; margin: 28px auto 0 auto; text-align: center;">
+          <tr>
+            <td style="padding: 0 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: center;">
+              <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: #E8E4DF; text-transform: uppercase; margin-bottom: 6px;">
+                NORTHUP STUDIO
+              </div>
+              <div style="font-size: 12px; line-height: 1.5; color: #8A857F; margin-bottom: 8px;">
+                Thoughtful design. Digital experiences. Meaningful growth.
+              </div>
+              <div style="font-size: 12px; margin-bottom: 12px;">
+                <a href="${siteUrl}" target="_blank" style="color: #FF8A3D; text-decoration: underline; text-underline-offset: 3px;">
+                  ${siteUrl}
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+  const textLines = [
+    'NORTHUP STUDIO — FREE DIGITAL AUDIT REQUEST',
+    '',
+    "You've got an audit request.",
+    'A new digital audit intake has arrived through your website. Review the details below and follow up with the prospective client.',
+    '',
+    'AUDIT DETAILS',
+    '--------------------------------------------------',
+  ]
+
+  if (auditRequest.full_name) textLines.push(`Client Name:     ${auditRequest.full_name}`)
+  if (auditRequest.work_email) textLines.push(`Client Email:    ${auditRequest.work_email}`)
+  if (auditRequest.website_url) textLines.push(`Website URL:     ${auditRequest.website_url}`)
+  if (auditRequest.audit_type) textLines.push(`Audit Focus:     ${auditRequest.audit_type}`)
+  textLines.push(`Date Received:   ${formattedDate}`)
+
+  if (auditRequest.biggest_challenge && auditRequest.biggest_challenge.trim()) {
+    textLines.push('')
+    textLines.push('BIGGEST CHALLENGE')
+    textLines.push('--------------------------------------------------')
+    textLines.push(auditRequest.biggest_challenge)
+  }
+
+  textLines.push('')
+  textLines.push('ADMIN ACTION')
+  textLines.push('--------------------------------------------------')
+  textLines.push(`Open in Admin Console:\n${adminDashboardUrl}`)
+
+  return { html, text: textLines.join('\n') }
+}
+
+/**
+ * Generates the Client Acknowledgement email for a Free Digital Audit request.
+ */
+export function buildAuditClientAcknowledgementEmail({
+  auditRequest,
+  adminNotificationEmail = 'northup4work@gmail.com',
+}) {
+  const safeName = escapeHtml(auditRequest.full_name || '')
+  const safeWebsite = escapeHtml(auditRequest.website_url || '')
+  const safeAuditType = escapeHtml(auditRequest.audit_type || 'Complete digital experience')
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Digital Audit Request Has Been Received</title>
+</head>
+<body style="margin: 0; padding: 0; width: 100% !important; background-color: #0C0C0C; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0C0C0C; table-layout: fixed;">
+    <tr>
+      <td align="center" style="padding: 40px 16px 56px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 580px; margin: 0 auto; background-color: #151515; border: 1px solid #303030; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);">
+          <tr>
+            <td style="padding: 32px 36px 20px 36px; border-bottom: 1px solid #2B2B2B;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left">
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 2px; color: #F5F1EB; text-transform: uppercase;">
+                      NORTHUP STUDIO
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #FF8A3D;">
+                      AUDIT INTAKE CONFIRMED
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 36px 40px 36px;">
+              <h1 style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 700; line-height: 1.3; color: #F5F1EB;">
+                ${safeName ? `Hello ${safeName},` : 'Hello,'}<br />We've received your audit request.
+              </h1>
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #A6A09A;">
+                Thank you for submitting your website to Northup Studio. We evaluate visual architecture, conversion flow, search engine discoverability, and technical execution.
+              </p>
+
+              <div style="margin-bottom: 24px; padding: 18px 20px; background-color: #1D1D1D; border: 1px solid #303030; border-radius: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 12px; color: #A6A09A;">
+                <div style="margin-bottom: 8px;">
+                  <span style="color: #666;">WEBSITE:</span> <span style="color: #F5F1EB; font-weight: 600;">${safeWebsite}</span>
+                </div>
+                <div>
+                  <span style="color: #666;">AUDIT FOCUS:</span> <span style="color: #FF8A3D; font-weight: 600;">${safeAuditType}</span>
+                </div>
+              </div>
+
+              <p style="margin: 0 0 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #A6A09A;">
+                Our studio team will review your website over the next <strong style="color: #F5F1EB;">24 to 48 hours</strong> and follow up with tailored findings and recommended next steps.
+              </p>
+
+              <div style="padding-top: 16px; border-top: 1px solid #2B2B2B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #8A857F;">
+                Need to add extra context? Feel free to reply directly to this email or reach us at <a href="mailto:${adminNotificationEmail}" style="color: #FF8A3D; text-decoration: underline;">${adminNotificationEmail}</a>.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+  const textLines = [
+    'NORTHUP STUDIO — AUDIT REQUEST RECEIVED',
+    '',
+    `Hello ${auditRequest.full_name || 'there'},`,
+    '',
+    'Thank you for requesting a Free Digital Audit for your website.',
+    `Website:     ${auditRequest.website_url}`,
+    `Audit Focus: ${auditRequest.audit_type}`,
+    '',
+    'Our team will analyze your digital presence and follow up with actionable findings within 24 to 48 hours.',
+    '',
+    'Best regards,',
+    'Northup Studio',
+    'https://northupstudio.vercel.app/',
+  ]
+
+  return { html, text: textLines.join('\n') }
+}
+
+/**
+ * Dispatches audit request notification emails via Resend.
+ */
+export async function sendAuditEmails({
+  auditRequest,
+  siteUrl = 'https://northupstudio.vercel.app',
+}) {
+  const resendApiKey = process.env.RESEND_API_KEY
+  const adminNotificationEmail =
+    process.env.RESEND_TO_EMAIL ||
+    process.env.CONTACT_NOTIFICATION_EMAIL ||
+    'northup4work@gmail.com'
+  const fromSender =
+    process.env.RESEND_FROM_EMAIL ||
+    'Northup Studio <onboarding@resend.dev>'
+
+  if (!resendApiKey) {
+    return {
+      success: false,
+      skipped: true,
+      reason: 'RESEND_API_KEY not configured in environment variables.',
+    }
+  }
+
+  const results = {
+    adminEmail: { sent: false },
+    clientEmail: { sent: false },
+  }
+
+  const clientName = (auditRequest.full_name || '').trim() || 'Prospective Client'
+  const adminSubject = `New Audit Request — ${clientName} (${auditRequest.website_url || 'Website'}) | Northup Studio`
+  const { html: adminHtml, text: adminText } = buildAuditNotificationEmail({ auditRequest, siteUrl })
+
+  // 1. Admin notification
+  try {
+    const adminRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromSender,
+        to: [adminNotificationEmail],
+        reply_to: auditRequest.work_email,
+        subject: adminSubject,
+        html: adminHtml,
+        text: adminText,
+      }),
+    })
+
+    if (adminRes.ok) {
+      const data = await adminRes.json().catch(() => ({}))
+      results.adminEmail = { sent: true, id: data.id }
+    } else {
+      const errText = await adminRes.text()
+      results.adminEmail = { sent: false, error: `Resend status ${adminRes.status}: ${errText}` }
+      console.warn('[email.js] Audit admin notification failed:', results.adminEmail.error)
+    }
+  } catch (err) {
+    results.adminEmail = { sent: false, error: err.message }
+    console.warn('[email.js] Audit admin notification exception:', err.message)
+  }
+
+  // 2. Client acknowledgement
+  if (auditRequest.work_email) {
+    try {
+      const { html: clientHtml, text: clientText } = buildAuditClientAcknowledgementEmail({
+        auditRequest,
+        adminNotificationEmail,
+      })
+
+      const clientRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromSender,
+          to: [auditRequest.work_email],
+          reply_to: adminNotificationEmail,
+          subject: 'Your Free Digital Audit Request Has Been Received — Northup Studio',
+          html: clientHtml,
+          text: clientText,
+        }),
+      })
+
+      if (clientRes.ok) {
+        const data = await clientRes.json().catch(() => ({}))
+        results.clientEmail = { sent: true, id: data.id }
+      } else {
+        const errText = await clientRes.text()
+        results.clientEmail = { sent: false, error: `Resend status ${clientRes.status}: ${errText}` }
+        console.warn('[email.js] Audit client acknowledgement failed:', results.clientEmail.error)
+      }
+    } catch (err) {
+      results.clientEmail = { sent: false, error: err.message }
+      console.warn('[email.js] Audit client acknowledgement exception:', err.message)
+    }
+  }
+
+  return {
+    success: results.adminEmail.sent || results.clientEmail.sent,
+    results,
+  }
+}

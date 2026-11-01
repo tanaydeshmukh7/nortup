@@ -216,7 +216,7 @@ export default function AuditModal({ isOpen, onClose }) {
 
                 <div className="space-y-2">
                   <div className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#FF8738]">
-                    CONFIRMED
+                    AUDIT CONFIRMED
                   </div>
                   <h3
                     id="audit-modal-title"
@@ -228,15 +228,15 @@ export default function AuditModal({ isOpen, onClose }) {
                     id="audit-modal-desc"
                     className="font-mono text-sm text-[#BDB4AE] max-w-md mx-auto leading-relaxed pt-1"
                   >
-                    Thanks for reaching out. Your audit request has been received.
+                    {submitResult.message || 'Thanks for reaching out. Your audit request has been securely recorded.'}
                   </p>
                 </div>
 
                 {/* Summary of submitted site */}
-                <div className="w-full max-w-md p-4 rounded-2xl bg-[#1E1613] border border-white/[0.08] text-left font-mono text-xs space-y-1.5 text-[#BDB4AE]">
+                <div className="w-full max-w-md p-4 rounded-2xl bg-[#1E1613] border border-white/[0.08] text-left font-mono text-xs space-y-2 text-[#BDB4AE]">
                   <div className="flex justify-between items-center text-[#F5F1ED]">
                     <span className="text-[#8E8681]">Website:</span>
-                    <span className="font-semibold">{formData.website}</span>
+                    <span className="font-semibold text-[#FF8738]">{formData.website}</span>
                   </div>
                   <div className="flex justify-between items-center text-[#F5F1ED]">
                     <span className="text-[#8E8681]">Focus:</span>
@@ -246,6 +246,12 @@ export default function AuditModal({ isOpen, onClose }) {
                     <span className="text-[#8E8681]">Contact:</span>
                     <span>{formData.email}</span>
                   </div>
+                  {submitResult.emailDelivery === 'sent' && (
+                    <div className="pt-2 border-t border-white/[0.08] text-[11px] text-emerald-400 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span>Confirmation email dispatched to your inbox.</span>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -281,19 +287,29 @@ export default function AuditModal({ isOpen, onClose }) {
                   </p>
                 </div>
 
-                {/* Temporary Configuration / Error Notice when backend is pending or submission fails */}
+                {/* Error Notice when submission fails */}
                 {submitResult && !submitResult.success && (
                   <div
                     role="alert"
-                    className="mb-6 p-4 rounded-2xl bg-[#2A1612] border border-[#FF4D0A]/50 text-[#F5F1ED] text-xs font-mono space-y-1.5 animate-in fade-in duration-200"
+                    className="mb-6 p-4 rounded-2xl bg-[#2A1612] border border-[#FF4D0A]/50 text-[#F5F1ED] text-xs font-mono space-y-2 animate-in fade-in duration-200"
                   >
-                    <div className="flex items-center gap-2 text-[#FF8738] font-bold text-[13px]">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>
-                        {submitResult.code === 'BACKEND_NOT_CONFIGURED'
-                          ? 'Backend Storage Pending (Phase 2)'
-                          : 'Submission Error'}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[#FF8738] font-bold text-[13px]">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                          {submitResult.code === 'TABLE_MIGRATION_PENDING'
+                            ? 'Database Migration Required'
+                            : 'Submission Notice'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="px-3 py-1 rounded-lg bg-[#FF4D0A] hover:bg-[#FF8738] text-white text-[11px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                      >
+                        Try Again
+                      </button>
                     </div>
                     <p className="text-[#F5F1ED]/90 leading-relaxed pl-6">
                       {submitResult.message}
