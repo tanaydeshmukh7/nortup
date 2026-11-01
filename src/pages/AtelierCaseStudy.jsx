@@ -1276,14 +1276,17 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
-              <button
-                type="button"
-                onClick={() => onNavigate('/#work')}
+              <a
+                href="/#work"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/#work')
+                }}
                 data-cursor="hover"
-                className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
+                className="px-6 py-3.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 inline-flex items-center"
               >
                 &larr; BACK TO ALL WORK
-              </button>
+              </a>
 
               <a
                 href={ATELIER_LIVE_URL}
@@ -1295,15 +1298,18 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
                 <span>EXPLORE LIVE WEBSITE ↗</span>
               </a>
 
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/arulis-dental-clinic')}
+              <a
+                href="/work/arulis-dental-clinic"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/arulis-dental-clinic')
+                }}
                 data-cursor="hover"
                 className="px-6 py-3.5 rounded-full bg-[#0F3D2E] hover:bg-[#155440] text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 flex items-center gap-2"
               >
                 <span>NEXT: ARULIS DENTAL CLINIC</span>
                 <ArrowUpRight className="w-4 h-4 text-[#D4AF37]" />
-              </button>
+              </a>
 
               <button
                 type="button"
@@ -1325,7 +1331,7 @@ export default function AtelierCaseStudy({ onNavigate, onOpenContact }) {
         GLOBAL NORTHUP STUDIO FOOTER (WITH COMPASS LANDING ANIMATION INTACT)
         ========================================================================
       */}
-      <Footer onOpenContact={onOpenContact} />
+      <Footer onOpenContact={onOpenContact} onNavigate={onNavigate} />
 
     </div>
   )

@@ -300,6 +300,7 @@ export default function App() {
           <Footer 
             onOpenContact={handleOpenContact} 
             onOpenPrivacy={() => setPrivacyModalOpen(true)}
+            onNavigate={handleNavigate}
           />
         </>
       )}

@@ -139,9 +139,16 @@ const STUDIO_PROJECTS = [
   },
 ]
 
-export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
+export default function AdminDashboard({
+  adminUser,
+  onLogout,
+  onNavigate,
+  initialTab = 'overview',
+  initialAudits = [],
+  initialSelectedAudit = null,
+}) {
   // Navigation State
-  const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'leads' | 'clients' | 'proposals' | 'projects' | 'tasks' | 'templates' | 'settings'
+  const [activeTab, setActiveTab] = useState(initialTab) // 'overview' | 'leads' | 'clients' | 'proposals' | 'projects' | 'tasks' | 'templates' | 'settings'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
 
@@ -178,14 +185,14 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const [copiedEmail, setCopiedEmail] = useState(null)
 
   // Audit Requests State
-  const [audits, setAudits] = useState([])
+  const [audits, setAudits] = useState(initialAudits)
   const [auditMetrics, setAuditMetrics] = useState({ total: 0, new: 0, in_progress: 0, completed: 0, rejected: 0 })
   const [selectedAuditStatus, setSelectedAuditStatus] = useState('all')
   const [auditSearch, setAuditSearch] = useState('')
   const [isAuditsLoading, setIsAuditsLoading] = useState(false)
   const [auditsError, setAuditsError] = useState(null)
   const [auditMigrationPending, setAuditMigrationPending] = useState(false)
-  const [selectedAudit, setSelectedAudit] = useState(null)
+  const [selectedAudit, setSelectedAudit] = useState(initialSelectedAudit)
   const [auditConvertingId, setAuditConvertingId] = useState(null)
   const [editingAuditNotesId, setEditingAuditNotesId] = useState(null)
   const [auditNotesDraft, setAuditNotesDraft] = useState('')

@@ -168,7 +168,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
             
             {/* Atelier Card */}
             {matchesFilter(projects[0]) && (
-              <motion.div 
+              <motion.a 
+                href={projects[0].route}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -176,21 +177,13 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 transition={{ duration: 0.4 }}
                 onMouseEnter={() => setHoveredId('atelier')}
                 onMouseLeave={() => setHoveredId(null)}
-                onClick={() => handleCardClick(projects[0])}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleCardClick(projects[0])
-                  }
-                }}
-                tabIndex={0}
-                role="button"
-                aria-label="View Atelier project"
+                onClick={(e) => handleCardClick(projects[0], e)}
+                aria-label="View Atelier Estates case study"
                 data-featured-card="true"
                 data-cursor-text="VIEW PROJECT ↗"
                 className={`${
                   matchesFilter(projects[1]) ? 'lg:col-span-8' : 'lg:col-span-12'
-                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl ${
+                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl block ${
                   hoveredId && hoveredId !== 'atelier' ? 'opacity-65 filter brightness-90' : 'opacity-100'
                 }`}
               >
@@ -217,7 +210,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 <div className="absolute top-6 right-6 w-11 h-11 rounded-full bg-[#15100E]/80 backdrop-blur-md border border-white/[0.15] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <ArrowUpRight className="w-5 h-5 text-[#F5F1ED] group-hover:text-[#FF8738] transition-colors" />
                 </div>
-              </motion.div>
+              </motion.a>
             )}
 
             {/* Poster Design Card */}
@@ -288,7 +281,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
 
         {/* Row 2: Aurelis (Full Width) */}
         {matchesFilter(projects[2]) && (
-          <motion.div 
+          <motion.a 
+            href={projects[2].route}
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -297,18 +291,10 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
             onMouseEnter={() => setHoveredId('aurelis')}
             onMouseLeave={() => setHoveredId(null)}
             onClick={(e) => handleCardClick(projects[2], e)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                handleCardClick(projects[2], e)
-              }
-            }}
-            tabIndex={0}
-            role="button"
-            aria-label="View Aurelis project"
+            aria-label="View Aurelis Dental Clinic case study"
             data-featured-card="true"
             data-cursor-text="VIEW PROJECT ↗"
-            className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/9] lg:aspect-auto lg:h-[632px] shadow-xl ${
+            className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/9] lg:aspect-auto lg:h-[632px] shadow-xl block ${
               hoveredId && hoveredId !== 'aurelis' ? 'opacity-65 filter brightness-90' : 'opacity-100'
             }`}
           >
@@ -334,7 +320,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
             <div className="absolute top-6 right-6 w-11 h-11 rounded-full bg-[#15100E]/80 backdrop-blur-md border border-white/[0.15] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
               <ArrowUpRight className="w-5 h-5 text-[#F5F1ED] group-hover:text-[#FF8738] transition-colors" />
             </div>
-          </motion.div>
+          </motion.a>
         )}
 
         {/* Row 3: 3-Card Grid (Cake Studio, Drop Cult, AUREX) */}
@@ -345,7 +331,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
               if (!matchesFilter(card)) return null
               const isHovered = hoveredId === card.id
               return (
-                <motion.div 
+                <motion.a 
+                  href={card.route}
                   layout
                   key={card.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -354,19 +341,11 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                   transition={{ duration: 0.4 }}
                   onMouseEnter={() => setHoveredId(card.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  onClick={() => handleCardClick(card)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      handleCardClick(card)
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`View ${card.title} project`}
+                  onClick={(e) => handleCardClick(card, e)}
+                  aria-label={`View ${card.title} case study`}
                   data-featured-card="true"
                   data-cursor-text="VIEW PROJECT ↗"
-                  className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[452/481] shadow-xl ${
+                  className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[452/481] shadow-xl block ${
                     hoveredId && !isHovered ? 'opacity-65 filter brightness-90' : 'opacity-100'
                   }`}
                 >
@@ -391,7 +370,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                   <div className="absolute top-5 right-5 w-10 h-10 rounded-full bg-[#15100E]/80 backdrop-blur-md border border-white/[0.15] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <ArrowUpRight className="w-4 h-4 text-[#F5F1ED]" />
                   </div>
-                </motion.div>
+                </motion.a>
               )
             })}
 

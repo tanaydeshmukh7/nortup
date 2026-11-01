@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, ArrowUp, Sparkles } from 'lucide-react'
 import FooterCompass from './FooterCompass'
 
-export default function Footer({ onOpenContact, onOpenPrivacy }) {
+export default function Footer({ onOpenContact, onOpenPrivacy, onNavigate }) {
   const footerContainerRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
   const currentYear = new Date().getFullYear()
@@ -158,26 +158,32 @@ export default function Footer({ onOpenContact, onOpenPrivacy }) {
 
         {/* 
           ========================================================================
-          2. MIDDLE SECTION — ORGANIZED LINK COLUMNS (Index, Information, Follow Us)
+          2. MIDDLE SECTION — ORGANIZED LINK COLUMNS (Studio, Case Studies, Information, Follow Us)
           ========================================================================
         */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 lg:gap-12 mb-10 sm:mb-14">
+        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 lg:gap-12 mb-10 sm:mb-14">
           
-          {/* Column 1: INDEX */}
+          {/* Column 1: STUDIO */}
           <div className="flex flex-col items-start gap-3">
             <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
-              INDEX
+              STUDIO
             </h4>
             <ul className="space-y-2">
               {[
-                { name: 'Home', href: '#' },
-                { name: 'Work', href: '#work' },
-                { name: 'Services', href: '#services' },
-                { name: 'About Us', href: '#about' },
+                { name: 'Home', href: '/' },
+                { name: 'Work', href: '/#work' },
+                { name: 'Services', href: '/#services' },
+                { name: 'About Us', href: '/#about' },
               ].map((item, idx) => (
                 <li key={idx}>
                   <a 
-                    href={item.href} 
+                    href={item.href}
+                    onClick={(e) => {
+                      if (onNavigate && (item.href.startsWith('/') || item.href.startsWith('#'))) {
+                        e.preventDefault()
+                        onNavigate(item.href)
+                      }
+                    }}
                     data-cursor="hover" 
                     className="group inline-flex items-center gap-1.5 font-mono text-[13px] sm:text-[14px] text-white/70 hover:text-white transition-all duration-200"
                   >
@@ -193,7 +199,44 @@ export default function Footer({ onOpenContact, onOpenPrivacy }) {
             </ul>
           </div>
 
-          {/* Column 2: INFORMATION */}
+          {/* Column 2: CASE STUDIES */}
+          <div className="flex flex-col items-start gap-3">
+            <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
+              CASE STUDIES
+            </h4>
+            <ul className="space-y-2">
+              {[
+                { name: 'Atelier Estates', href: '/work/atelier-estates' },
+                { name: 'Aurelis Dental', href: '/work/arulis-dental-clinic' },
+                { name: 'Maison de Sucre', href: '/work/maison-de-sucre' },
+                { name: 'AUREX Club', href: '/work/aurex-performance-club' },
+                { name: 'Drop Cult', href: '/work/drop-cult' },
+              ].map((item, idx) => (
+                <li key={idx}>
+                  <a 
+                    href={item.href}
+                    onClick={(e) => {
+                      if (onNavigate) {
+                        e.preventDefault()
+                        onNavigate(item.href)
+                      }
+                    }}
+                    data-cursor="hover" 
+                    className="group inline-flex items-center gap-1.5 font-mono text-[13px] sm:text-[14px] text-white/70 hover:text-white transition-all duration-200"
+                  >
+                    <span className="text-[#FF4D0A] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200">
+                      ›
+                    </span>
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">
+                      {item.name}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3: INFORMATION */}
           <div className="flex flex-col items-start gap-3">
             <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
               INFORMATION
@@ -228,21 +271,21 @@ export default function Footer({ onOpenContact, onOpenPrivacy }) {
             </ul>
           </div>
 
-          {/* Column 3: FOLLOW US */}
+          {/* Column 4: FOLLOW US */}
           <div className="col-span-2 md:col-span-1 flex flex-col items-start gap-3 pt-2 md:pt-0">
             <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
-              FOLLOW US
+              CONNECT
             </h4>
             <ul className="flex flex-row md:flex-col items-center md:items-start gap-5 md:gap-2">
               {[
                 { name: 'Instagram', handle: '@northup.studio', href: 'https://www.instagram.com/northup.studio/' },
-                { name: 'LinkedIn', handle: '', href: 'https://linkedin.com' },
+                { name: 'Direct Email', handle: '', href: 'mailto:northup4work@gmail.com' },
               ].map((item, idx) => (
                 <li key={idx}>
                   <a 
                     href={item.href} 
-                    target="_blank" 
-                    rel="noreferrer" 
+                    target={item.href.startsWith('mailto:') ? undefined : '_blank'} 
+                    rel={item.href.startsWith('mailto:') ? undefined : 'noreferrer'} 
                     data-cursor="hover" 
                     className="group inline-flex items-center gap-1.5 font-mono text-[13px] sm:text-[14px] text-white/70 hover:text-white transition-all duration-200"
                   >

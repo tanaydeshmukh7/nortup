@@ -1288,45 +1288,69 @@ export default function DropCultCaseStudy({ onNavigate, onOpenContact }) {
               </span>
 
               <div className="flex flex-wrap items-center justify-center gap-3 font-mono text-[11px] font-bold">
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/work/atelier-estates')}
+                <a
+                  href="/#work"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate('/#work')
+                  }}
+                  data-cursor="hover"
+                  className="px-5 py-3 bg-[#242522] hover:bg-white hover:text-black text-white border border-white/15 uppercase tracking-wider transition-all inline-flex items-center"
+                >
+                  &larr; ALL WORK
+                </a>
+
+                <a
+                  href="/work/atelier-estates"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate('/work/atelier-estates')
+                  }}
                   data-cursor="hover"
                   className="px-5 py-3 bg-[#242522] hover:bg-[#9B5D3E] text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
                 >
-                  <span>ATELIER ESTATES</span>
+                  <span>NEXT: ATELIER ESTATES</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                </a>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/work/maison-de-sucre')}
+                <a
+                  href="/work/maison-de-sucre"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate('/work/maison-de-sucre')
+                  }}
                   data-cursor="hover"
                   className="px-5 py-3 bg-[#242522] hover:bg-[#B87F83] text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
                 >
                   <span>MAISON DE SUCRE</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                </a>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/work/aurex-performance-club')}
+                <a
+                  href="/work/aurex-performance-club"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate('/work/aurex-performance-club')
+                  }}
                   data-cursor="hover"
                   className="px-5 py-3 bg-[#242522] hover:bg-[#C6FF00] hover:text-[#090A09] text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
                 >
                   <span>AUREX PERFORMANCE</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                </a>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/work/arulis-dental-clinic')}
+                <a
+                  href="/work/arulis-dental-clinic"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onNavigate('/work/arulis-dental-clinic')
+                  }}
                   data-cursor="hover"
                   className="px-5 py-3 bg-[#242522] hover:bg-[#0F3D2E] text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
                 >
                   <span>ARULIS DENTAL</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                </a>
 
                 <button
                   type="button"
@@ -1344,7 +1368,7 @@ export default function DropCultCaseStudy({ onNavigate, onOpenContact }) {
       </section>
 
       {/* Shared Persistent Footer */}
-      <Footer onOpenContact={onOpenContact} />
+      <Footer onOpenContact={onOpenContact} onNavigate={onNavigate} />
 
     </article>
   )

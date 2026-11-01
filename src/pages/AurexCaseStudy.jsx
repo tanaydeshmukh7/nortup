@@ -944,44 +944,43 @@ export default function AurexCaseStudy({ onNavigate, onOpenContact }) {
           <RevealBlock delay={0.15}>
             <div className="pt-12 sm:pt-16 border-t border-white/10 flex flex-wrap items-center justify-center gap-4 font-mono text-[11px] font-bold">
               
-              <button
-                type="button"
-                onClick={() => onNavigate('/#work')}
+              <a
+                href="/#work"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/#work')
+                }}
                 data-cursor="hover"
-                className="px-6 py-3.5 bg-[#151715] hover:bg-white text-white hover:text-black border border-white/15 uppercase tracking-wider transition-all"
+                className="px-6 py-3.5 bg-[#151715] hover:bg-white text-white hover:text-black border border-white/15 uppercase tracking-wider transition-all inline-flex items-center"
               >
                 &larr; BACK TO FEATURED WORK
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/atelier-estates')}
+              <a
+                href="/work/drop-cult"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/drop-cult')
+                }}
+                data-cursor="hover"
+                className="px-6 py-3.5 bg-[#151715] hover:bg-[#D8FF00] hover:text-[#242522] text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
+              >
+                <span>NEXT: DROP CULT</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+
+              <a
+                href="/work/atelier-estates"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/atelier-estates')
+                }}
                 data-cursor="hover"
                 className="px-6 py-3.5 bg-[#151715] hover:bg-[#9B5D3E] text-white hover:text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
               >
-                <span>NEXT: ATELIER ESTATES</span>
+                <span>ATELIER ESTATES</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/maison-de-sucre')}
-                data-cursor="hover"
-                className="px-6 py-3.5 bg-[#151715] hover:bg-[#B87F83] text-white hover:text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <span>MAISON DE SUCRE</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/arulis-dental-clinic')}
-                data-cursor="hover"
-                className="px-6 py-3.5 bg-[#151715] hover:bg-[#0F3D2E] text-white hover:text-white border border-white/15 uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <span>ARULIS DENTAL</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
+              </a>
 
               <button
                 type="button"
@@ -1003,7 +1002,7 @@ export default function AurexCaseStudy({ onNavigate, onOpenContact }) {
         SHARED NORTHUP STUDIO FOOTER
         ========================================================================
       */}
-      <Footer onOpenContact={onOpenContact} />
+      <Footer onOpenContact={onOpenContact} onNavigate={onNavigate} />
 
       {/* Marquee Animation CSS Keyframe */}
       <style>{`

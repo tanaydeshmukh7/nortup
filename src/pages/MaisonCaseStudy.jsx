@@ -1082,34 +1082,43 @@ export default function MaisonCaseStudy({ onNavigate, onOpenContact }) {
 
             {/* Navigation links back to selected work & next projects */}
             <div className="pt-8 border-t border-white/15 flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                onClick={() => onNavigate('/#work')}
+              <a
+                href="/#work"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/#work')
+                }}
                 data-cursor="hover"
-                className="px-6 py-3 rounded-full bg-white/10 hover:bg-white text-white hover:text-[#392A27] font-mono text-[11px] font-bold tracking-wider uppercase transition-all shadow-sm"
+                className="px-6 py-3 rounded-full bg-white/10 hover:bg-white text-white hover:text-[#392A27] font-mono text-[11px] font-bold tracking-wider uppercase transition-all shadow-sm inline-flex items-center"
               >
                 &larr; BACK TO ALL WORK
-              </button>
+              </a>
 
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/atelier-estates')}
+              <a
+                href="/work/aurex-performance-club"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/aurex-performance-club')
+                }}
+                data-cursor="hover"
+                className="px-6 py-3 rounded-full bg-[#181918] hover:bg-[#C6FF00] text-white hover:text-[#090A09] border border-white/20 font-mono text-[11px] font-bold tracking-wider uppercase transition-all shadow-sm flex items-center gap-2"
+              >
+                <span>NEXT: AUREX CLUB</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+
+              <a
+                href="/work/atelier-estates"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/atelier-estates')
+                }}
                 data-cursor="hover"
                 className="px-6 py-3 rounded-full bg-[#9B5D3E] hover:bg-[#B36E49] text-white font-mono text-[11px] font-bold tracking-wider uppercase transition-all shadow-sm flex items-center gap-2"
               >
-                <span>NEXT: ATELIER ESTATES</span>
+                <span>ATELIER ESTATES</span>
                 <ArrowUpRight className="w-3.5 h-3.5 text-[#D8CDBC]" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('/work/arulis-dental-clinic')}
-                data-cursor="hover"
-                className="px-6 py-3 rounded-full bg-[#0F3D2E] hover:bg-[#155440] text-white font-mono text-[11px] font-bold tracking-wider uppercase transition-all shadow-sm flex items-center gap-2"
-              >
-                <span>ARULIS DENTAL CLINIC</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-[#D4AF37]" />
-              </button>
+              </a>
 
               <button
                 type="button"
@@ -1131,7 +1140,7 @@ export default function MaisonCaseStudy({ onNavigate, onOpenContact }) {
         GLOBAL NORTHUP STUDIO FOOTER
         ========================================================================
       */}
-      <Footer onOpenContact={onOpenContact} />
+      <Footer onOpenContact={onOpenContact} onNavigate={onNavigate} />
 
       {/* Embedded Marquee Animation CSS Keyframe */}
       <style>{`

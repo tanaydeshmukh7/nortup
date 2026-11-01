@@ -1105,14 +1105,30 @@ export default function ArulisCaseStudy({ onNavigate, onOpenContact }) {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
-              <button
-                type="button"
-                onClick={() => onNavigate('/#work')}
+              <a
+                href="/#work"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/#work')
+                }}
                 data-cursor="hover"
-                className="px-6 py-3.5 rounded-full bg-white hover:bg-[#FF8738] text-black hover:text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95"
+                className="px-6 py-3.5 rounded-full bg-white hover:bg-[#FF8738] text-black hover:text-white font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 inline-flex items-center"
               >
                 ← BACK TO ALL WORK
-              </button>
+              </a>
+
+              <a
+                href="/work/maison-de-sucre"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNavigate('/work/maison-de-sucre')
+                }}
+                data-cursor="hover"
+                className="px-6 py-3.5 rounded-full bg-[#1A1D1A] hover:bg-[#252825] text-white border border-white/20 font-mono text-[12px] font-bold tracking-wider uppercase transition-all duration-300 shadow-md active:scale-95 flex items-center gap-2"
+              >
+                <span>NEXT: MAISON DE SUCRE</span>
+                <ArrowUpRight className="w-4 h-4 text-[#D4AF37]" />
+              </a>
 
               <button
                 type="button"
@@ -1134,7 +1150,7 @@ export default function ArulisCaseStudy({ onNavigate, onOpenContact }) {
         GLOBAL NORTHUP STUDIO FOOTER (WITH COMPASS LANDING ANIMATION INTACT)
         ========================================================================
       */}
-      <Footer onOpenContact={onOpenContact} />
+      <Footer onOpenContact={onOpenContact} onNavigate={onNavigate} />
 
     </div>
   )
