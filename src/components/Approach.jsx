@@ -206,10 +206,11 @@ export default function Approach({ onOpenContact }) {
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <img 
             src="/assets/bg.png" 
-            alt="Services background" 
+            alt="" 
+            aria-hidden="true"
             className="w-full h-full object-cover object-center select-none"
-            loading="eager"
-            decoding="sync"
+            loading="lazy"
+            decoding="async"
           />
           {/* Subtle dark overlay to preserve text readability while retaining fiery atmosphere */}
           <div className="absolute inset-0 bg-[#0A0706]/85" />
@@ -535,10 +536,10 @@ export default function Approach({ onOpenContact }) {
 
         {/* 3. Monumental Typography Artwork: IDEAS INTO IMPACT */}
         <div className="relative z-10 my-4 sm:my-8 select-none overflow-hidden">
-          <h1 className="font-anton text-[clamp(3.6rem,8.8vw,8rem)] leading-[0.88] uppercase tracking-wide text-white drop-shadow-[0_8px_45px_rgba(0,0,0,0.95)]">
+          <h2 className="font-anton text-[clamp(3.6rem,8.8vw,8rem)] leading-[0.88] uppercase tracking-wide text-white drop-shadow-[0_8px_45px_rgba(0,0,0,0.95)]">
             IDEAS<br />
             INTO IMPACT
-          </h1>
+          </h2>
         </div>
 
         {/* 4. Methodology & Process Grid: 3 Stats Badges + [01] OUR APPROACH + [02] HOW WE WORK */}
@@ -661,7 +662,9 @@ export default function Approach({ onOpenContact }) {
                 <div className="relative aspect-[4/5] overflow-hidden bg-black">
                   <img 
                     src={member.image} 
-                    alt={member.name}
+                    alt={`${member.name} - ${member.role} at Northup Studio`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
@@ -730,6 +733,8 @@ export default function Approach({ onOpenContact }) {
                       <img 
                         src={tool.icon} 
                         alt={tool.name} 
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
                       />
                     </div>
@@ -747,6 +752,8 @@ export default function Approach({ onOpenContact }) {
                       <img 
                         src={tool.icon} 
                         alt={tool.name} 
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
                       />
                     </div>

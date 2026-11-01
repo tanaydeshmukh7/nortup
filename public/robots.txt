@@ -1,0 +1,9 @@
+# https://northupstudio.vercel.app/robots.txt
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /video/
+
+# Host & Sitemaps
+Host: https://northupstudio.vercel.app
+Sitemap: https://northupstudio.vercel.app/sitemap.xml

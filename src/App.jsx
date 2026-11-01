@@ -8,7 +8,9 @@ import Approach from './components/Approach'
 import CTASection from './components/CTASection'
 import Footer from './components/Footer'
 import ContactModal from './components/ContactModal'
+import AuditModal from './components/AuditModal'
 import CustomCursor from './components/CustomCursor'
+import SEO from './components/SEO'
 import ArulisCaseStudy from './pages/ArulisCaseStudy'
 import AtelierCaseStudy from './pages/AtelierCaseStudy'
 import MaisonCaseStudy from './pages/MaisonCaseStudy'
@@ -17,6 +19,7 @@ import DropCultCaseStudy from './pages/DropCultCaseStudy'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
+  const [auditModalOpen, setAuditModalOpen] = useState(false)
   const [contactSubject, setContactSubject] = useState('Project Inquiry')
   const [currentRoute, setCurrentRoute] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -63,6 +66,11 @@ export default function App() {
       const anchor = e.target.closest('a[href^="#"]')
       if (!anchor) return
       const href = anchor.getAttribute('href')
+      if (href === '#audit') {
+        e.preventDefault()
+        setAuditModalOpen(true)
+        return
+      }
       if (href === '#' || !href) {
         e.preventDefault()
         lenis.scrollTo(0, { duration: 1.2 })
@@ -122,12 +130,12 @@ export default function App() {
   // Pause Lenis when modal is open to prevent background scrolling
   useEffect(() => {
     if (!lenisRef.current) return
-    if (contactModalOpen) {
+    if (contactModalOpen || auditModalOpen) {
       lenisRef.current.stop()
     } else {
       lenisRef.current.start()
     }
-  }, [contactModalOpen])
+  }, [contactModalOpen, auditModalOpen])
 
   // Central Navigation Handler
   const handleNavigate = (to) => {
@@ -168,7 +176,15 @@ export default function App() {
     }
   }
 
+  const handleOpenAudit = () => {
+    setAuditModalOpen(true)
+  }
+
   const handleOpenContact = (subject = 'Project Inquiry') => {
+    if (subject === 'Get an Audit' || subject?.toLowerCase().includes('audit')) {
+      setAuditModalOpen(true)
+      return
+    }
     setContactSubject(subject)
     setContactModalOpen(true)
   }
@@ -196,6 +212,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
       {/* Desktop Custom Cursor */}
+      <SEO route={currentRoute} />
       <CustomCursor />
 
       {/* Fixed Viewport Floating Navbar (Persistent across entire website) */}
@@ -246,7 +263,7 @@ export default function App() {
           {/* Main Content Sections */}
           <main className="w-full">
             {/* Hero Section */}
-            <Hero onOpenContact={handleOpenContact} />
+            <Hero onOpenContact={handleOpenContact} onOpenAudit={handleOpenAudit} />
 
             {/* Ticker / Moving Forward Section */}
             <Ticker />
@@ -274,6 +291,12 @@ export default function App() {
         isOpen={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         initialSubject={contactSubject}
+      />
+
+      {/* Production Audit Request Modal */}
+      <AuditModal 
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
       />
     </div>
   )

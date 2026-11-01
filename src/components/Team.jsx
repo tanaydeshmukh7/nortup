@@ -52,7 +52,9 @@ export default function Team() {
               <div className="relative aspect-[4/5] overflow-hidden bg-black">
                 <img 
                   src={member.image} 
-                  alt={member.name}
+                  alt={`${member.name} - ${member.role} at Northup Studio`}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
                 />
                 {/* Subtle vignette gradient */}
@@ -112,6 +114,8 @@ export default function Team() {
                 <img 
                   src={tool.icon} 
                   alt={tool.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';

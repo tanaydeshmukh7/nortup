@@ -47,7 +47,8 @@ export default function Footer({ onOpenContact }) {
           {/* Authentic studio texture overlay */}
           <img 
             src="/assets/hero-bg-figma.png" 
-            alt="Footer Gradient" 
+            alt="" 
+            aria-hidden="true" 
             className="w-full h-full object-cover mix-blend-screen opacity-75 scale-105"
             loading="lazy"
           />

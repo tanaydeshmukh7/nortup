@@ -41,5 +41,6 @@ verify_*.cjs
 *.png
 !bg.png
 !assets/*.png
+!public/*.png
 !public/**/*.png
 

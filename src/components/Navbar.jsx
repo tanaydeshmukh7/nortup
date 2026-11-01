@@ -82,7 +82,7 @@ export default function Navbar({ onOpenContact, onNavigate, currentRoute = "/" }
         >
           <img 
             src="/assets/logo.png" 
-            alt="Northup Studio" 
+            alt="Northup Studio logo" 
             className="h-8 sm:h-10 lg:h-11 w-auto object-contain transition-all"
           />
         </a>
@@ -121,7 +121,8 @@ export default function Navbar({ onOpenContact, onNavigate, currentRoute = "/" }
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c1818] border border-white/15 text-white font-keania text-[13px] tracking-wider">
             <img 
               src="/assets/icon-mini-compass.png" 
-              alt="Globe / Compass" 
+              alt="" 
+            aria-hidden="true" 
               className="w-4 h-4 object-contain"
             />
             <span>ENG</span>
@@ -193,7 +194,7 @@ export default function Navbar({ onOpenContact, onNavigate, currentRoute = "/" }
             <hr className="border-white/10 my-1" />
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-white/80 font-keania text-sm">
-                <img src="/assets/icon-mini-compass.png" alt="Compass" className="w-4 h-4 object-contain" />
+                <img src="/assets/icon-mini-compass.png" alt="" aria-hidden="true" className="w-4 h-4 object-contain" />
                 <span>ENG</span>
               </div>
               <button 

@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import CompassCanvas from './CompassCanvas'
 import { ArrowUpRight } from 'lucide-react'
 
-export default function Hero({ onOpenContact }) {
+export default function Hero({ onOpenContact, onOpenAudit }) {
   const shouldReduceMotion = useReducedMotion()
 
   return (
@@ -28,7 +28,9 @@ export default function Hero({ onOpenContact }) {
           {/* Exact Figma Background Gradient Asset */}
           <img 
             src="/assets/hero-bg-figma.png" 
-            alt="Cinematic Background Gradient" 
+            alt="" 
+            aria-hidden="true"
+            fetchPriority="high"
             className="w-full h-full object-cover mix-blend-screen opacity-95 scale-105"
           />
 
@@ -53,10 +55,10 @@ export default function Hero({ onOpenContact }) {
             </div>
 
             {/* Headline: ORCHESTRATING BRAND GROWTH */}
-            <div className="font-jaro text-[38px] sm:text-[54px] md:text-[62px] lg:text-[66px] xl:text-[68px] leading-[0.92] text-white tracking-wider uppercase mb-3.5 sm:mb-4 select-none drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]">
+            <h1 className="font-jaro text-[38px] sm:text-[54px] md:text-[62px] lg:text-[66px] xl:text-[68px] leading-[0.92] text-white tracking-wider uppercase mb-3.5 sm:mb-4 select-none drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]">
               <span className="block whitespace-nowrap">ORCHESTRATING</span>
               <span className="block whitespace-nowrap">BRAND GROWTH</span>
-            </div>
+            </h1>
 
             {/* Supporting Copy */}
             <p className="font-mono text-[13px] sm:text-[14px] lg:text-[15px] font-bold text-white/90 max-w-[460px] leading-relaxed mb-5 sm:mb-6">
@@ -82,7 +84,8 @@ export default function Hero({ onOpenContact }) {
                 </a>
 
                 <button 
-                  onClick={() => onOpenContact('Get an Audit')}
+                  type="button"
+                  onClick={() => (onOpenAudit ? onOpenAudit() : onOpenContact('Get an Audit'))}
                   data-cursor="hover"
                   className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#191818]/90 text-white border border-white/20 font-keania text-[13px] sm:text-[14px] tracking-wider hover:border-white/50 hover:bg-[#272424] transition-all duration-200 shadow-md active:scale-95"
                 >

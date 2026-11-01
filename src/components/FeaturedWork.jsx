@@ -196,7 +196,9 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
               >
                 <img 
                   src="/assets/atelier.jpg" 
-                  alt="Atelier Estates" 
+                  alt="Atelier Estates architectural residences website design and showcase" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0908]/90 via-[#0B0908]/20 to-transparent pointer-events-none" />
@@ -248,7 +250,9 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
               >
                 <img 
                   src="/assets/posters.jpg" 
-                  alt="Poster Design Collection" 
+                  alt="Poster Design Collection exploring mythology and modern culture" 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0908]/95 via-transparent to-transparent pointer-events-none" />
@@ -311,6 +315,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
             <img 
               src="/assets/aurelis.jpg" 
               alt="Aurelis Dental Brand Identity & Web Development" 
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0B0908]/90 via-[#0B0908]/20 to-transparent pointer-events-none" />
@@ -367,6 +373,8 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                   <img 
                     src={card.image} 
                     alt={card.alt} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B0908]/90 via-transparent to-transparent pointer-events-none" />
