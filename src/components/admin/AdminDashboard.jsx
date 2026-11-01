@@ -76,6 +76,7 @@ import {
   convertAuditToLead,
 } from '../../services/adminService'
 import { STARTER_TEMPLATES, interpolateTemplate } from '../../services/templateData'
+import ErrorBoundary from './ErrorBoundary'
 
 // Pipeline stages with Northup Studio Orange & Charcoal color tokens
 const PIPELINE_STATUSES = [
@@ -181,6 +182,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const [selectedAuditStatus, setSelectedAuditStatus] = useState('all')
   const [auditSearch, setAuditSearch] = useState('')
   const [isAuditsLoading, setIsAuditsLoading] = useState(false)
+  const [auditsError, setAuditsError] = useState(null)
   const [auditMigrationPending, setAuditMigrationPending] = useState(false)
   const [selectedAudit, setSelectedAudit] = useState(null)
   const [auditConvertingId, setAuditConvertingId] = useState(null)
@@ -283,6 +285,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   // Fetch audits from serverless API
   const loadAudits = useCallback(async () => {
     setIsAuditsLoading(true)
+    setAuditsError(null)
     try {
       const data = await getAdminAudits({
         status: selectedAuditStatus,
@@ -292,11 +295,12 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
         setAuditMigrationPending(true)
       } else {
         setAuditMigrationPending(false)
-        setAudits(data?.audits || [])
+        setAudits(Array.isArray(data?.audits) ? data.audits : [])
         if (data?.metrics) setAuditMetrics(data.metrics)
       }
     } catch (err) {
       console.warn('Failed to load audits:', err.message)
+      setAuditsError(err.message || 'Failed to load audit requests.')
     } finally {
       setIsAuditsLoading(false)
     }
@@ -316,6 +320,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     try {
       await updateAuditRequest(auditId, { status })
       setAudits((prev) => prev.map((a) => (a.id === auditId ? { ...a, status } : a)))
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit((prev) => (prev ? { ...prev, status } : null))
+      }
       showNotification(`Audit status set to "${status.toUpperCase()}"`)
       loadAudits()
     } catch (err) {
@@ -323,10 +330,14 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     }
   }
 
-  const handleAuditNotesSave = async (auditId) => {
+  const handleAuditNotesSave = async (auditId, notesToSave) => {
+    const textToSave = notesToSave !== undefined ? notesToSave : auditNotesDraft
     try {
-      await updateAuditRequest(auditId, { admin_notes: auditNotesDraft })
-      setAudits((prev) => prev.map((a) => (a.id === auditId ? { ...a, admin_notes: auditNotesDraft } : a)))
+      await updateAuditRequest(auditId, { admin_notes: textToSave })
+      setAudits((prev) => prev.map((a) => (a.id === auditId ? { ...a, admin_notes: textToSave } : a)))
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit((prev) => (prev ? { ...prev, admin_notes: textToSave } : null))
+      }
       setEditingAuditNotesId(null)
       showNotification('Audit internal notes saved')
     } catch (err) {
@@ -340,6 +351,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     try {
       const res = await convertAuditToLead(auditId)
       showNotification(res.message || 'Audit converted to qualified lead!')
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit((prev) => (prev ? { ...prev, status: 'completed', converted_lead_id: res.leadId } : null))
+      }
       loadAudits()
       loadLeads(1)
     } catch (err) {
@@ -712,6 +726,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       return isoString
     }
   }
+
+  // Fallback alias to guarantee no undefined reference crashes
+  const formatReceivedDate = formatDate
 
   // Helper for status badge
   const getStatusBadge = (status) => {
@@ -1737,311 +1754,354 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
               VIEW: AUDIT REQUESTS TAB (Free Digital Audit Intakes)
              ========================================================================= */}
           {activeTab === 'audits' && (
-            <div className="space-y-6">
-              {/* Audit KPIs */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 font-mono">
-                <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
-                  <p className="text-[10px] uppercase tracking-wider text-[#A6A09A]">Total Requests</p>
-                  <p className="text-2xl font-bold text-[#F5F1EB] mt-1">{auditMetrics.total || 0}</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#151515] border border-[#FF8A3D]/40 bg-[#FF8A3D]/5">
-                  <p className="text-[10px] uppercase tracking-wider text-[#FF8A3D]">New / Pending</p>
-                  <p className="text-2xl font-bold text-[#FF8A3D] mt-1">{auditMetrics.new || 0}</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
-                  <p className="text-[10px] uppercase tracking-wider text-sky-400">In Progress</p>
-                  <p className="text-2xl font-bold text-sky-400 mt-1">{auditMetrics.in_progress || 0}</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
-                  <p className="text-[10px] uppercase tracking-wider text-emerald-400">Completed</p>
-                  <p className="text-2xl font-bold text-emerald-400 mt-1">{auditMetrics.completed || 0}</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-400">Rejected</p>
-                  <p className="text-2xl font-bold text-zinc-400 mt-1">{auditMetrics.rejected || 0}</p>
-                </div>
-              </div>
-
-              {/* Database Migration Pending Notice */}
-              {auditMigrationPending && (
-                <div className="p-5 rounded-2xl bg-[#FF8A3D]/10 border border-[#FF8A3D]/40 text-xs font-mono text-[#F5F1EB] flex items-start gap-3.5">
-                  <AlertCircle className="w-5 h-5 text-[#FF8A3D] flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1.5 flex-1">
-                    <p className="font-bold text-[#FF8A3D]">Supabase Table Initialization Required</p>
-                    <p className="text-[#A6A09A] leading-relaxed">
-                      The <code className="text-[#F5F1EB]">public.audit_requests</code> table has not been created in your Supabase project yet.
-                      To activate persistent storage, open the Supabase SQL Editor and execute:
-                    </p>
-                    <code className="block p-2 rounded bg-black/60 border border-[#303030] text-[#FF8A3D] text-[11px]">
-                      supabase/migrations/20261102_create_audit_requests_table.sql
-                    </code>
+            <ErrorBoundary title="Audit Requests View" onReset={loadAudits}>
+              <div className="space-y-6">
+                {/* Audit KPIs */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 font-mono">
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
+                    <p className="text-[10px] uppercase tracking-wider text-[#A6A09A]">Total Requests</p>
+                    <p className="text-2xl font-bold text-[#F5F1EB] mt-1">{auditMetrics?.total || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#FF8A3D]/40 bg-[#FF8A3D]/5">
+                    <p className="text-[10px] uppercase tracking-wider text-[#FF8A3D]">New / Pending</p>
+                    <p className="text-2xl font-bold text-[#FF8A3D] mt-1">{auditMetrics?.new || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
+                    <p className="text-[10px] uppercase tracking-wider text-sky-400">In Progress</p>
+                    <p className="text-2xl font-bold text-sky-400 mt-1">{auditMetrics?.in_progress || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
+                    <p className="text-[10px] uppercase tracking-wider text-emerald-400">Completed</p>
+                    <p className="text-2xl font-bold text-emerald-400 mt-1">{auditMetrics?.completed || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030]">
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400">Rejected</p>
+                    <p className="text-2xl font-bold text-zinc-400 mt-1">{auditMetrics?.rejected || 0}</p>
                   </div>
                 </div>
-              )}
 
-              {/* Status Filter Pills & Search */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 font-mono text-xs">
-                  {[
-                    { key: 'all', label: 'All Requests', count: auditMetrics.total },
-                    { key: 'new', label: 'New', count: auditMetrics.new },
-                    { key: 'in_progress', label: 'In Progress', count: auditMetrics.in_progress },
-                    { key: 'completed', label: 'Completed', count: auditMetrics.completed },
-                    { key: 'rejected', label: 'Rejected', count: auditMetrics.rejected },
-                  ].map((s) => (
+                {/* Database Migration Pending Notice */}
+                {auditMigrationPending && (
+                  <div className="p-5 rounded-2xl bg-[#FF8A3D]/10 border border-[#FF8A3D]/40 text-xs font-mono text-[#F5F1EB] flex items-start gap-3.5">
+                    <AlertCircle className="w-5 h-5 text-[#FF8A3D] flex-shrink-0 mt-0.5" />
+                    <div className="space-y-1.5 flex-1">
+                      <p className="font-bold text-[#FF8A3D]">Supabase Table Initialization Required</p>
+                      <p className="text-[#A6A09A] leading-relaxed">
+                        The <code className="text-[#F5F1EB]">public.audit_requests</code> table has not been created in your Supabase project yet.
+                        To activate persistent storage, open the Supabase SQL Editor and execute:
+                      </p>
+                      <code className="block p-2 rounded bg-black/60 border border-[#303030] text-[#FF8A3D] text-[11px]">
+                        supabase/migrations/20261102_create_audit_requests_table.sql
+                      </code>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Banner with Retry */}
+                {auditsError && (
+                  <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs font-mono text-[#F5F1EB] flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 text-red-300">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
+                      <span>{auditsError}</span>
+                    </div>
                     <button
-                      key={s.key}
                       type="button"
-                      onClick={() => setSelectedAuditStatus(s.key)}
-                      className={`px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
-                        selectedAuditStatus === s.key
-                          ? 'bg-[#1D1D1D] text-[#FF8A3D] border border-[#FF8A3D]/40 font-bold'
-                          : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#151515]'
-                      }`}
+                      onClick={loadAudits}
+                      className="px-3 py-1.5 rounded-lg bg-[#FF8A3D] text-black font-bold text-xs uppercase whitespace-nowrap cursor-pointer hover:bg-[#E96D24]"
                     >
-                      <span>{s.label}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#101010] text-[#A6A09A]">
-                        {s.count || 0}
-                      </span>
+                      Retry Loading
                     </button>
-                  ))}
-                </div>
+                  </div>
+                )}
 
-                <div className="relative w-full sm:w-64">
-                  <input
-                    type="text"
-                    placeholder="Search audits..."
-                    value={auditSearch}
-                    onChange={(e) => setAuditSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#151515] border border-[#303030] text-xs font-mono text-[#F5F1EB] placeholder-[#A6A09A]/50 focus:outline-none focus:border-[#FF8A3D]"
-                  />
-                  <Globe className="w-3.5 h-3.5 text-[#A6A09A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Audits List */}
-              {isAuditsLoading ? (
-                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#FF8A3D] mx-auto mb-2" />
-                  <p className="text-xs text-[#A6A09A]">Loading audit requests...</p>
-                </div>
-              ) : audits.length === 0 ? (
-                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
-                  <Globe className="w-10 h-10 text-[#FF8A3D] mx-auto mb-3 opacity-50" />
-                  <p className="text-sm font-bold text-[#F5F1EB]">No Audit Requests Found</p>
-                  <p className="text-xs text-[#A6A09A] mt-1">
-                    {selectedAuditStatus !== 'all'
-                      ? `No audit requests match the "${selectedAuditStatus}" filter.`
-                      : 'Audit submissions through your website will appear here with instant review actions.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {audits.map((audit) => {
-                    const statusBadgeColors = {
-                      new: 'text-[#FF8A3D] bg-[#FF8A3D]/10 border-[#FF8A3D]/30',
-                      in_progress: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
-                      completed: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-                      rejected: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/30',
-                    }
-
-                    const isEditingNotes = editingAuditNotesId === audit.id
-                    const isConverting = auditConvertingId === audit.id
-
-                    return (
-                      <motion.div
-                        key={audit.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-5 sm:p-6 rounded-2xl bg-[#151515] border border-[#303030] space-y-4 font-mono shadow-sm hover:border-[#3D3D3D] transition-all"
+                {/* Status Filter Pills & Search */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 font-mono text-xs">
+                    {[
+                      { key: 'all', label: 'All Requests', count: auditMetrics?.total },
+                      { key: 'new', label: 'New', count: auditMetrics?.new },
+                      { key: 'in_progress', label: 'In Progress', count: auditMetrics?.in_progress },
+                      { key: 'completed', label: 'Completed', count: auditMetrics?.completed },
+                      { key: 'rejected', label: 'Rejected', count: auditMetrics?.rejected },
+                    ].map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setSelectedAuditStatus(s.key)}
+                        className={`px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                          selectedAuditStatus === s.key
+                            ? 'bg-[#1D1D1D] text-[#FF8A3D] border border-[#FF8A3D]/40 font-bold'
+                            : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#151515]'
+                        }`}
                       >
-                        {/* Top Row: Prospect Details & Status */}
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2.5">
-                              <h3 className="text-base font-bold text-[#F5F1EB]">{audit.full_name}</h3>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                                  statusBadgeColors[audit.status] || 'text-[#A6A09A] border-[#303030]'
-                                }`}
-                              >
-                                {audit.status.replace('_', ' ')}
-                              </span>
-                              {audit.converted_lead_id && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 border border-purple-500/30 text-purple-400 uppercase tracking-wider">
-                                  Converted to CRM Lead
+                        <span>{s.label}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#101010] text-[#A6A09A]">
+                          {s.count || 0}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <input
+                      type="text"
+                      placeholder="Search audits..."
+                      value={auditSearch}
+                      onChange={(e) => setAuditSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#151515] border border-[#303030] text-xs font-mono text-[#F5F1EB] placeholder-[#A6A09A]/50 focus:outline-none focus:border-[#FF8A3D]"
+                    />
+                    <Globe className="w-3.5 h-3.5 text-[#A6A09A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Audits List */}
+                {isAuditsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((n) => (
+                      <div
+                        key={n}
+                        className="p-6 rounded-2xl bg-[#151515] border border-[#303030] animate-pulse space-y-3 font-mono"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="h-4 w-40 bg-[#252525] rounded" />
+                          <div className="h-4 w-20 bg-[#252525] rounded-full" />
+                        </div>
+                        <div className="h-12 bg-[#1D1D1D] rounded-xl" />
+                        <div className="h-3 w-2/3 bg-[#252525] rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : audits.length === 0 ? (
+                  <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
+                    <Globe className="w-10 h-10 text-[#FF8A3D] mx-auto mb-3 opacity-50" />
+                    <p className="text-sm font-bold text-[#F5F1EB]">No Audit Requests Found</p>
+                    <p className="text-xs text-[#A6A09A] mt-1">
+                      {selectedAuditStatus !== 'all'
+                        ? `No audit requests match the "${selectedAuditStatus}" filter.`
+                        : 'Audit submissions through your website will appear here with instant review actions.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {audits.map((audit) => {
+                      const statusBadgeColors = {
+                        new: 'text-[#FF8A3D] bg-[#FF8A3D]/10 border-[#FF8A3D]/30',
+                        in_progress: 'text-sky-400 bg-sky-500/10 border-sky-500/30',
+                        completed: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+                        rejected: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/30',
+                      }
+
+                      const isEditingNotes = editingAuditNotesId === audit.id
+                      const isConverting = auditConvertingId === audit.id
+
+                      return (
+                        <motion.div
+                          key={audit.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-5 sm:p-6 rounded-2xl bg-[#151515] border border-[#303030] space-y-4 font-mono shadow-sm hover:border-[#3D3D3D] transition-all"
+                        >
+                          {/* Top Row: Prospect Details & Status */}
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2.5">
+                                <h3
+                                  onClick={() => setSelectedAudit(audit)}
+                                  className="text-base font-bold text-[#F5F1EB] hover:text-[#FF8A3D] transition-colors cursor-pointer"
+                                >
+                                  {audit.full_name}
+                                </h3>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
+                                    statusBadgeColors[audit.status] || 'text-[#A6A09A] border-[#303030]'
+                                  }`}
+                                >
+                                  {(audit.status || 'new').replace('_', ' ')}
                                 </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-[#A6A09A]">
-                              <a
-                                href={`mailto:${audit.work_email}`}
-                                className="hover:text-[#FF8A3D] transition-colors"
-                              >
-                                {audit.work_email}
-                              </a>
-                              <span>&middot;</span>
-                              <span>{formatReceivedDate(audit.created_at)}</span>
-                            </div>
-                          </div>
-
-                          {/* Quick Status Dropdown */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-[#A6A09A]">Status:</span>
-                            <select
-                              value={audit.status}
-                              onChange={(e) => handleAuditStatusChange(audit.id, e.target.value)}
-                              className="px-2.5 py-1.5 rounded-lg bg-[#1D1D1D] border border-[#303030] text-xs text-[#F5F1EB] focus:outline-none focus:border-[#FF8A3D] cursor-pointer"
-                            >
-                              <option value="new">New</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="completed">Completed</option>
-                              <option value="rejected">Rejected</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Middle Row: Website URL & Focus */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#1D1D1D] border border-[#2B2B2B] text-xs">
-                          <div>
-                            <span className="text-[#8E8681] text-[10px] uppercase tracking-wider block mb-0.5">
-                              Target Website
-                            </span>
-                            <a
-                              href={audit.website_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-bold text-[#FF8A3D] hover:underline flex items-center gap-1.5 truncate"
-                            >
-                              <span>{audit.website_url}</span>
-                              <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0" />
-                            </a>
-                          </div>
-                          <div>
-                            <span className="text-[#8E8681] text-[10px] uppercase tracking-wider block mb-0.5">
-                              Audit Focus Area
-                            </span>
-                            <span className="text-[#F5F1EB] font-semibold">{audit.audit_type}</span>
-                          </div>
-                        </div>
-
-                        {/* Biggest Challenge Section */}
-                        {audit.biggest_challenge && (
-                          <div className="text-xs p-3.5 rounded-xl bg-[#101010] border border-[#262626] text-[#A6A09A]">
-                            <span className="text-[10px] uppercase tracking-wider text-[#78736D] block mb-1 font-bold">
-                              Reported Challenge / Goals:
-                            </span>
-                            <p className="text-[#F5F1EB] leading-relaxed whitespace-pre-wrap">
-                              {audit.biggest_challenge}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Internal Notes Section */}
-                        <div className="pt-2 border-t border-[#262626] text-xs">
-                          {isEditingNotes ? (
-                            <div className="space-y-2">
-                              <textarea
-                                rows={2}
-                                value={auditNotesDraft}
-                                onChange={(e) => setAuditNotesDraft(e.target.value)}
-                                placeholder="Add private notes on evaluation findings, Lighthouse score, design issues..."
-                                className="w-full p-2.5 rounded-xl bg-[#1D1D1D] border border-[#303030] text-xs text-[#F5F1EB] placeholder-[#A6A09A]/40 focus:outline-none focus:border-[#FF8A3D] resize-none"
-                              />
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingAuditNotesId(null)}
-                                  className="px-3 py-1 rounded-lg bg-[#252525] text-[#A6A09A] hover:text-[#F5F1EB]"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAuditNotesSave(audit.id)}
-                                  className="px-3 py-1 rounded-lg bg-[#FF8A3D] text-black font-bold"
-                                >
-                                  Save Note
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-between">
-                              <div className="text-[#A6A09A] text-[11px] truncate flex-1 pr-4">
-                                {audit.admin_notes ? (
-                                  <span>
-                                    <strong className="text-[#F5F1EB]">Note:</strong> {audit.admin_notes}
+                                {audit.converted_lead_id && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 border border-purple-500/30 text-purple-400 uppercase tracking-wider">
+                                    Converted to CRM Lead
                                   </span>
-                                ) : (
-                                  <span className="italic text-[#78736D]">No internal notes recorded yet.</span>
                                 )}
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingAuditNotesId(audit.id)
-                                  setAuditNotesDraft(audit.admin_notes || '')
-                                }}
-                                className="text-[11px] text-[#FF8A3D] hover:underline whitespace-nowrap cursor-pointer"
-                              >
-                                {audit.admin_notes ? 'Edit Note' : '+ Add Note'}
-                              </button>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-[#A6A09A]">
+                                <a
+                                  href={`mailto:${audit.work_email}`}
+                                  className="hover:text-[#FF8A3D] transition-colors"
+                                >
+                                  {audit.work_email}
+                                </a>
+                                <span>&middot;</span>
+                                <span>{formatDate(audit.created_at)}</span>
+                              </div>
                             </div>
-                          )}
-                        </div>
 
-                        {/* Action Buttons */}
-                        <div className="pt-3 border-t border-[#262626] flex flex-wrap items-center justify-between gap-2.5">
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={audit.website_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-xs text-[#F5F1EB] flex items-center gap-1.5 transition-colors"
-                            >
-                              <Globe className="w-3.5 h-3.5" />
-                              <span>Open Website</span>
-                            </a>
-                            <a
-                              href={`mailto:${audit.work_email}?subject=Northup%20Studio%20Free%20Digital%20Audit%20Findings&body=Hi%20${encodeURIComponent(
-                                audit.full_name
-                              )},%0D%0A%0D%0AThank%20you%20for%20requesting%20a%20digital%20audit%20for%20${encodeURIComponent(
-                                audit.website_url
-                              )}.%0D%0A%0D%0AHere%20are%20our%20initial%20findings:`}
-                              className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-xs text-[#F5F1EB] flex items-center gap-1.5 transition-colors"
-                            >
-                              <Mail className="w-3.5 h-3.5" />
-                              <span>Email Findings</span>
-                            </a>
+                            {/* Quick Status Dropdown */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-[#A6A09A]">Status:</span>
+                              <select
+                                value={audit.status || 'new'}
+                                onChange={(e) => handleAuditStatusChange(audit.id, e.target.value)}
+                                className="px-2.5 py-1.5 rounded-lg bg-[#1D1D1D] border border-[#303030] text-xs text-[#F5F1EB] focus:outline-none focus:border-[#FF8A3D] cursor-pointer"
+                              >
+                                <option value="new">New</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="rejected">Rejected</option>
+                              </select>
+                            </div>
                           </div>
 
-                          {!audit.converted_lead_id && (
-                            <button
-                              type="button"
-                              onClick={() => handleConvertAudit(audit.id)}
-                              disabled={isConverting}
-                              className="px-3.5 py-1.5 rounded-lg bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
-                            >
-                              {isConverting ? (
-                                <>
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  <span>Converting...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="w-3.5 h-3.5" />
-                                  <span>Convert to CRM Lead</span>
-                                </>
-                              )}
-                            </button>
+                          {/* Middle Row: Website URL & Focus */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#1D1D1D] border border-[#2B2B2B] text-xs">
+                            <div>
+                              <span className="text-[#8E8681] text-[10px] uppercase tracking-wider block mb-0.5">
+                                Target Website
+                              </span>
+                              <a
+                                href={audit.website_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-bold text-[#FF8A3D] hover:underline flex items-center gap-1.5 truncate"
+                              >
+                                <span>{audit.website_url}</span>
+                                <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0" />
+                              </a>
+                            </div>
+                            <div>
+                              <span className="text-[#8E8681] text-[10px] uppercase tracking-wider block mb-0.5">
+                                Audit Focus Area
+                              </span>
+                              <span className="text-[#F5F1EB] font-semibold">{audit.audit_type}</span>
+                            </div>
+                          </div>
+
+                          {/* Biggest Challenge Section */}
+                          {audit.biggest_challenge && (
+                            <div className="text-xs p-3.5 rounded-xl bg-[#101010] border border-[#262626] text-[#A6A09A]">
+                              <span className="text-[10px] uppercase tracking-wider text-[#78736D] block mb-1 font-bold">
+                                Reported Challenge / Goals:
+                              </span>
+                              <p className="text-[#F5F1EB] leading-relaxed whitespace-pre-wrap">
+                                {audit.biggest_challenge}
+                              </p>
+                            </div>
                           )}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+
+                          {/* Internal Notes Section */}
+                          <div className="pt-2 border-t border-[#262626] text-xs">
+                            {isEditingNotes ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  rows={2}
+                                  value={auditNotesDraft}
+                                  onChange={(e) => setAuditNotesDraft(e.target.value)}
+                                  placeholder="Add private notes on evaluation findings, Lighthouse score, design issues..."
+                                  className="w-full p-2.5 rounded-xl bg-[#1D1D1D] border border-[#303030] text-xs text-[#F5F1EB] placeholder-[#A6A09A]/40 focus:outline-none focus:border-[#FF8A3D] resize-none"
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingAuditNotesId(null)}
+                                    className="px-3 py-1 rounded-lg bg-[#252525] text-[#A6A09A] hover:text-[#F5F1EB]"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAuditNotesSave(audit.id)}
+                                    className="px-3 py-1 rounded-lg bg-[#FF8A3D] text-black font-bold"
+                                  >
+                                    Save Note
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div className="text-[#A6A09A] text-[11px] truncate flex-1 pr-4">
+                                  {audit.admin_notes ? (
+                                    <span>
+                                      <strong className="text-[#F5F1EB]">Note:</strong> {audit.admin_notes}
+                                    </span>
+                                  ) : (
+                                    <span className="italic text-[#78736D]">No internal notes recorded yet.</span>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingAuditNotesId(audit.id)
+                                    setAuditNotesDraft(audit.admin_notes || '')
+                                  }}
+                                  className="text-[11px] text-[#FF8A3D] hover:underline whitespace-nowrap cursor-pointer"
+                                >
+                                  {audit.admin_notes ? 'Edit Note' : '+ Add Note'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="pt-3 border-t border-[#262626] flex flex-wrap items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAudit(audit)}
+                                className="px-3 py-1.5 rounded-lg bg-[#FF8A3D]/10 hover:bg-[#FF8A3D]/20 border border-[#FF8A3D]/30 text-xs font-bold text-[#FF8A3D] flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View Dossier</span>
+                              </button>
+                              <a
+                                href={audit.website_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-xs text-[#F5F1EB] flex items-center gap-1.5 transition-colors"
+                              >
+                                <Globe className="w-3.5 h-3.5" />
+                                <span>Website</span>
+                              </a>
+                              <a
+                                href={`mailto:${audit.work_email}?subject=Northup%20Studio%20Free%20Digital%20Audit%20Findings&body=Hi%20${encodeURIComponent(
+                                  audit.full_name
+                                )},%0D%0A%0D%0AThank%20you%20for%20requesting%20a%20digital%20audit%20for%20${encodeURIComponent(
+                                  audit.website_url
+                                )}.%0D%0A%0D%0AHere%20are%20our%20initial%20findings:`}
+                                className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-xs text-[#F5F1EB] flex items-center gap-1.5 transition-colors"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>Email</span>
+                              </a>
+                            </div>
+
+                            {!audit.converted_lead_id && (
+                              <button
+                                type="button"
+                                onClick={() => handleConvertAudit(audit.id)}
+                                disabled={isConverting}
+                                className="px-3.5 py-1.5 rounded-lg bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                              >
+                                {isConverting ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Converting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="w-3.5 h-3.5" />
+                                    <span>Convert to CRM Lead</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </ErrorBoundary>
           )}
 
           {/* =========================================================================
@@ -3461,6 +3521,205 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 </button>
               </div>
             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Right-Side Slide-Over Audit Dossier Drawer */}
+      <AnimatePresence>
+        {selectedAudit && (
+          <div className="fixed inset-0 z-50 overflow-hidden font-mono select-text">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedAudit(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity cursor-pointer"
+            />
+
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                className="w-screen max-w-lg bg-[#151515] border-l border-[#303030] shadow-2xl flex flex-col justify-between"
+              >
+                {/* Header */}
+                <div className="p-6 border-b border-[#303030] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-widest text-[#FF8A3D] font-bold block mb-1">
+                      Audit Request Dossier
+                    </span>
+                    <h2 className="text-lg font-bold text-[#F5F1EB]">{selectedAudit.full_name}</h2>
+                    <p className="text-xs text-[#A6A09A] mt-0.5">{selectedAudit.work_email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAudit(null)}
+                    className="p-2 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#A6A09A] hover:text-[#F5F1EB] transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-5 overflow-y-auto flex-1">
+                  {/* Status Selection */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[#A6A09A] font-bold uppercase tracking-wider text-[11px]">
+                        Lifecycle Status:
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FF8A3D]/10 text-[#FF8A3D] border border-[#FF8A3D]/30">
+                        {(selectedAudit.status || 'new').replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {['new', 'in_progress', 'completed', 'rejected'].map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => handleAuditStatusChange(selectedAudit.id, st)}
+                          className={`py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors border cursor-pointer ${
+                            selectedAudit.status === st
+                              ? 'bg-[#FF8A3D] text-black border-[#FF8A3D]'
+                              : 'bg-[#151515] text-[#A6A09A] border-[#303030] hover:text-[#F5F1EB]'
+                          }`}
+                        >
+                          {st.replace('_', ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Target Website */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-2">
+                    <span className="text-[10px] uppercase tracking-wider text-[#A6A09A] block">
+                      Target Website URL
+                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <a
+                        href={selectedAudit.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-bold text-[#FF8A3D] hover:underline truncate"
+                      >
+                        {selectedAudit.website_url}
+                      </a>
+                      <a
+                        href={selectedAudit.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-[#252525] hover:bg-[#303030] text-[#F5F1EB] transition-colors"
+                        title="Open Website"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Audit Focus Area */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030]">
+                    <span className="text-[10px] uppercase tracking-wider text-[#A6A09A] block mb-1">
+                      Audit Focus Area
+                    </span>
+                    <p className="text-sm font-semibold text-[#F5F1EB]">{selectedAudit.audit_type}</p>
+                  </div>
+
+                  {/* Reported Challenge / Goals */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-1.5">
+                    <span className="text-[10px] uppercase tracking-wider text-[#A6A09A] block">
+                      Client Goals &amp; Reported Challenge
+                    </span>
+                    <p className="text-xs text-[#F5F1EB] leading-relaxed whitespace-pre-wrap">
+                      {selectedAudit.biggest_challenge || 'No challenge description provided.'}
+                    </p>
+                  </div>
+
+                  {/* Submission Metadata */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-[#A6A09A]">
+                      <span>Submitted Date:</span>
+                      <span className="text-[#F5F1EB] font-bold">{formatDate(selectedAudit.created_at)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[#A6A09A]">
+                      <span>Intake Source:</span>
+                      <span className="text-[#F5F1EB]">{selectedAudit.source || 'Website Hero Audit'}</span>
+                    </div>
+                    {selectedAudit.converted_lead_id && (
+                      <div className="flex justify-between items-center text-purple-400 pt-2 border-t border-[#303030]">
+                        <span>Conversion Link:</span>
+                        <span className="font-bold">Lead ID: {selectedAudit.converted_lead_id.slice(0, 8)}...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Internal Review Notes */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-2">
+                    <span className="text-[10px] uppercase tracking-wider text-[#A6A09A] font-bold block">
+                      Internal Studio Review Notes
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={selectedAudit.admin_notes || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedAudit((prev) => (prev ? { ...prev, admin_notes: val } : null))
+                      }}
+                      placeholder="Record Lighthouse performance metrics, responsive layout defects, conversion issues..."
+                      className="w-full p-3 rounded-xl bg-[#151515] border border-[#303030] text-xs text-[#F5F1EB] placeholder-[#A6A09A]/40 focus:outline-none focus:border-[#FF8A3D] resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleAuditNotesSave(selectedAudit.id, selectedAudit.admin_notes || '')}
+                        className="px-4 py-1.5 rounded-lg bg-[#FF8A3D] text-black font-bold text-xs uppercase cursor-pointer hover:bg-[#E96D24]"
+                      >
+                        Save Notes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-6 border-t border-[#303030] bg-[#101010] flex items-center justify-between gap-3">
+                  <a
+                    href={`mailto:${selectedAudit.work_email}?subject=Northup%20Studio%20Free%20Digital%20Audit%20Findings&body=Hi%20${encodeURIComponent(
+                      selectedAudit.full_name
+                    )},%0D%0A%0D%0AThank%20you%20for%20requesting%20a%20digital%20audit%20for%20${encodeURIComponent(
+                      selectedAudit.website_url
+                    )}.%0D%0A%0D%0AHere%20are%20our%20initial%20findings:`}
+                    className="flex-1 py-3 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-xs font-bold text-[#F5F1EB] text-center transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Send Findings</span>
+                  </a>
+
+                  {!selectedAudit.converted_lead_id && (
+                    <button
+                      type="button"
+                      onClick={() => handleConvertAudit(selectedAudit.id)}
+                      disabled={auditConvertingId === selectedAudit.id}
+                      className="flex-1 py-3 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {auditConvertingId === selectedAudit.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Converting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="w-4 h-4" />
+                          <span>Convert to Lead</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>

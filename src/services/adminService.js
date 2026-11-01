@@ -375,6 +375,12 @@ export async function getAdminAudits({
     headers,
   })
 
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text()
+    throw new Error(`API returned an unexpected response (${res.status || 'unknown'})`)
+  }
+
   const data = await res.json()
   if (!res.ok) {
     throw new Error(data.error || 'Failed to fetch audit requests.')
@@ -394,6 +400,12 @@ export async function updateAuditRequest(auditId, { status, admin_notes }) {
     body: JSON.stringify({ auditId, status, admin_notes }),
   })
 
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text()
+    throw new Error(`API returned an unexpected response (${res.status || 'unknown'})`)
+  }
+
   const data = await res.json()
   if (!res.ok) {
     throw new Error(data.error || 'Failed to update audit request.')
@@ -412,6 +424,12 @@ export async function convertAuditToLead(auditId) {
     headers,
     body: JSON.stringify({ auditId, convertToLead: true }),
   })
+
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await res.text()
+    throw new Error(`API returned an unexpected response (${res.status || 'unknown'})`)
+  }
 
   const data = await res.json()
   if (!res.ok) {
