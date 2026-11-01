@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ShieldAlert, LogOut, ArrowLeft, Loader2, Sparkles, AlertTriangle } from 'lucide-react'
+import { ShieldAlert, LogOut, ArrowLeft, Loader2 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../services/supabaseClient'
 import { verifyAdminStatus } from '../../services/adminService'
 import AdminLogin from './AdminLogin'
@@ -86,9 +86,9 @@ export default function AdminView({ onNavigate }) {
   // 1. Loading State
   if (authState === 'checking') {
     return (
-      <div className="min-h-screen w-full bg-[#0B0908] text-[#F5F1ED] flex flex-col items-center justify-center font-mono text-xs select-none">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF4D0A] mb-3" />
-        <span className="text-white/60">Verifying Northup Studio admin credentials...</span>
+      <div className="min-h-screen w-full bg-[#0B0B0B] text-[#F5F5F0] flex flex-col items-center justify-center font-mono text-xs select-none">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C6FF00] mb-3" />
+        <span className="text-[#A1A1AA]">Verifying Northup Studio admin credentials...</span>
       </div>
     )
   }
@@ -96,17 +96,17 @@ export default function AdminView({ onNavigate }) {
   // 2. Unauthorized State (Authenticated user, but not on admin allowlist)
   if (authState === 'unauthorized') {
     return (
-      <div className="min-h-screen w-full bg-[#0B0908] text-[#F5F1ED] flex flex-col justify-center items-center px-4 py-12 select-none">
+      <div className="min-h-screen w-full bg-[#0B0B0B] text-[#F5F5F0] flex flex-col justify-center items-center px-4 py-12 select-none font-mono">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-[#140F0D] border border-red-500/30 rounded-3xl p-8 sm:p-10 text-center shadow-2xl font-mono"
+          className="w-full max-w-md bg-[#141414] border border-red-500/30 rounded-2xl p-8 sm:p-10 text-center shadow-2xl"
         >
-          <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center mb-4">
             <ShieldAlert className="w-6 h-6" />
           </div>
 
-          <h2 className="font-jaro text-2xl uppercase tracking-wider text-white mb-2">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-[#F5F5F0] mb-2">
             Unauthorized Access
           </h2>
 
@@ -118,15 +118,15 @@ export default function AdminView({ onNavigate }) {
             </p>
           </div>
 
-          <p className="text-xs text-white/50 mb-6 leading-relaxed">
-            To grant access to this account, add this email to the <code className="text-white">ADMIN_EMAILS</code> environment variable or insert it into the <code className="text-white">public.admin_users</code> Supabase table.
+          <p className="text-xs text-[#A1A1AA] mb-6 leading-relaxed">
+            To grant access to this account, add this email to the <code className="text-[#F5F5F0]">ADMIN_EMAILS</code> environment variable or insert it into the <code className="text-[#F5F5F0]">public.admin_users</code> Supabase table.
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#F5F5F0] text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out / Switch Account</span>
@@ -135,7 +135,7 @@ export default function AdminView({ onNavigate }) {
             <button
               type="button"
               onClick={() => onNavigate('/')}
-              className="w-full py-3 rounded-xl bg-transparent hover:bg-white/[0.04] text-white/60 hover:text-white font-mono text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-transparent hover:bg-[#1C1C1C] text-[#A1A1AA] hover:text-[#F5F5F0] text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Return to Portfolio</span>

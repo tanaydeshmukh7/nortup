@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck,
@@ -31,8 +31,17 @@ import {
   Send,
   Trophy,
   XCircle,
+  LayoutDashboard,
+  Users,
+  CheckSquare,
+  FolderKanban,
+  Settings,
+  Menu,
+  Download,
+  Eye,
+  SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react'
-import { supabase } from '../../services/supabaseClient'
 import {
   getAdminLeads,
   updateLeadStatus,
@@ -41,14 +50,15 @@ import {
   deleteLeadNote,
 } from '../../services/adminService'
 
+// Pipeline stages with accessible color tokens
 const PIPELINE_STATUSES = [
-  { key: 'all', label: 'All Enquiries', color: 'text-white' },
-  { key: 'new', label: 'New', color: 'text-[#FF8738]', bg: 'bg-[#FF4D0A]/15 border-[#FF4D0A]/30' },
-  { key: 'contacted', label: 'Contacted', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/30' },
-  { key: 'qualified', label: 'Qualified', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/30' },
-  { key: 'proposal_sent', label: 'Proposal Sent', color: 'text-purple-400', bg: 'bg-purple-500/15 border-purple-500/30' },
-  { key: 'won', label: 'Won', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/30' },
-  { key: 'lost', label: 'Lost', color: 'text-zinc-400', bg: 'bg-zinc-500/15 border-zinc-500/30' },
+  { key: 'all', label: 'All Enquiries', badgeColor: 'text-[#F5F5F0] bg-[#1C1C1C] border-[#2B2B2B]' },
+  { key: 'new', label: 'New', badgeColor: 'text-[#C6FF00] bg-[#C6FF00]/10 border-[#C6FF00]/30' },
+  { key: 'contacted', label: 'Contacted', badgeColor: 'text-sky-400 bg-sky-500/10 border-sky-500/30' },
+  { key: 'qualified', label: 'Qualified', badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
+  { key: 'proposal_sent', label: 'Proposal Sent', badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+  { key: 'won', label: 'Won', badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+  { key: 'lost', label: 'Lost', badgeColor: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/30' },
 ]
 
 const SERVICES_LIST = [
@@ -60,7 +70,52 @@ const SERVICES_LIST = [
   'Other',
 ]
 
+// Studio Case Studies showcase for Projects tab
+const STUDIO_PROJECTS = [
+  {
+    title: 'Atelier Estates',
+    category: 'Architecture & Digital Platform',
+    route: '/work/atelier-estates',
+    description: 'High-end residential architectural showcase with immersive spatial gallery.',
+    tag: 'Case Study',
+  },
+  {
+    title: 'Aurelis Dental Clinic',
+    category: 'Brand Identity & Web Experience',
+    route: '/work/arulis-dental-clinic',
+    description: 'Bespoke patient consultation portal with custom dental procedure monograph.',
+    tag: 'Case Study',
+  },
+  {
+    title: 'Maison de Sucre',
+    category: 'Artisan Pastry E-Commerce',
+    route: '/work/maison-de-sucre',
+    description: 'Boutique Parisian patisserie storefront with real-time order scheduling.',
+    tag: 'Case Study',
+  },
+  {
+    title: 'AUREX Performance Club',
+    category: 'Kinetic Fitness Digital Experience',
+    route: '/work/aurex-performance-club',
+    description: 'High-intensity athletic training club portal with interactive class calendar.',
+    tag: 'Case Study',
+  },
+  {
+    title: 'Drop Cult',
+    category: 'Streetwear Storefront & Lookbook',
+    route: '/work/drop-cult',
+    description: 'Underground fashion label digital storefront featuring limited drops.',
+    tag: 'Case Study',
+  },
+]
+
 export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
+  // Navigation State
+  const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'leads' | 'followups' | 'projects' | 'settings'
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
+
+  // Leads Data & Metrics
   const [leads, setLeads] = useState([])
   const [metrics, setMetrics] = useState({
     total: 0,
@@ -78,7 +133,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     totalPages: 1,
   })
 
-  // Filter & Search States
+  // Filters & Search
   const [search, setSearch] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedService, setSelectedService] = useState('All Services')
@@ -91,7 +146,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const [actionSuccessMessage, setActionSuccessMessage] = useState(null)
   const [copiedEmail, setCopiedEmail] = useState(null)
 
-  // Lead Detail Drawer & Notes
+  // Lead Detail Drawer & Internal Notes
   const [selectedLead, setSelectedLead] = useState(null)
   const [notes, setNotes] = useState([])
   const [isLoadingNotes, setIsLoadingNotes] = useState(false)
@@ -146,16 +201,14 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const handleStatusChange = async (leadId, newStatus) => {
     setUpdatingStatusId(leadId)
     try {
-      const updatedLead = await updateLeadStatus(leadId, newStatus)
-      // Update in table
+      await updateLeadStatus(leadId, newStatus)
+      // Update locally
       setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)))
-      // Update in open drawer
       if (selectedLead?.id === leadId) {
         setSelectedLead((prev) => ({ ...prev, status: newStatus }))
       }
-      // Re-fetch metrics silently
       loadLeads(pagination.page)
-      showNotification(`Status updated to ${newStatus}`)
+      showNotification(`Status updated to "${newStatus}"`)
     } catch (err) {
       alert(`Could not update status: ${err.message}`)
     } finally {
@@ -163,7 +216,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     }
   }
 
-  // Open Lead Detail & fetch notes
+  // Open Lead Detail Drawer & fetch notes
   const openLeadDetail = async (lead) => {
     setSelectedLead(lead)
     setIsLoadingNotes(true)
@@ -188,7 +241,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       const createdNote = await addLeadNote(selectedLead.id, newNote.trim())
       setNotes((prev) => [createdNote, ...prev])
       setNewNote('')
-      showNotification('Internal note saved.')
+      showNotification('Internal note saved successfully.')
     } catch (err) {
       alert(`Error saving note: ${err.message}`)
     } finally {
@@ -216,397 +269,1205 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
     setCopiedEmail(text)
+    showNotification('Email copied to clipboard')
     setTimeout(() => setCopiedEmail(null), 2000)
   }
 
+  // Export current filtered leads to CSV
+  const handleExportCSV = () => {
+    if (!leads.length) {
+      alert('No leads available to export.')
+      return
+    }
+
+    const headers = ['ID', 'Date', 'Name', 'Email', 'Company', 'Service', 'Budget', 'Timeline', 'Status', 'Description']
+    const rows = leads.map((l) => [
+      `"${l.id}"`,
+      `"${l.created_at || ''}"`,
+      `"${(l.name || '').replace(/"/g, '""')}"`,
+      `"${(l.email || '').replace(/"/g, '""')}"`,
+      `"${(l.company || '').replace(/"/g, '""')}"`,
+      `"${(l.service || '').replace(/"/g, '""')}"`,
+      `"${(l.budget || '').replace(/"/g, '""')}"`,
+      `"${(l.timeline || '').replace(/"/g, '""')}"`,
+      `"${l.status}"`,
+      `"${(l.project_description || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `northup_leads_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    showNotification('CSV export downloaded.')
+  }
+
+  // Helper for status badge
   const getStatusBadge = (status) => {
     const s = PIPELINE_STATUSES.find((item) => item.key === status) || {
       label: status,
-      color: 'text-white',
-      bg: 'bg-white/10 border-white/20',
+      badgeColor: 'text-[#F5F5F0] bg-[#1C1C1C] border-[#2B2B2B]',
     }
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium border uppercase tracking-wider ${s.bg} ${s.color}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium border uppercase tracking-wider ${s.badgeColor}`}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90" />
         {s.label}
       </span>
     )
   }
 
+  // Format date cleanly
+  const formatDate = (isoString) => {
+    if (!isoString) return '—'
+    try {
+      const date = new Date(isoString)
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch {
+      return isoString
+    }
+  }
+
+  // Filter leads that require follow-up
+  const followUpLeads = useMemo(() => {
+    return leads.filter((l) => l.status === 'new' || l.status === 'contacted')
+  }, [leads])
+
+  // Conversion rate metric
+  const winRate = useMemo(() => {
+    const closed = (metrics.won || 0) + (metrics.lost || 0)
+    if (closed === 0) return 0
+    return Math.round(((metrics.won || 0) / closed) * 100)
+  }, [metrics.won, metrics.lost])
+
   return (
-    <div className="min-h-screen w-full bg-[#0B0908] text-[#F5F1ED] flex flex-col font-mono text-sm select-none">
-      {/* 1. TOP ADMIN BAR */}
-      <header className="sticky top-0 z-40 w-full bg-[#140F0D]/95 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#FF4D0A]/15 border border-[#FF4D0A]/30 flex items-center justify-center text-[#FF8738]">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
+    <div className="h-screen w-full bg-[#0B0B0B] text-[#F5F5F0] flex overflow-hidden font-sans select-none antialiased">
+      {/* =========================================================================
+          1. SIDEBAR NAVIGATION
+         ========================================================================= */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#141414] border-r border-[#2B2B2B] flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="p-6 border-b border-[#2B2B2B] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-keania text-lg text-white tracking-wider uppercase">NORTHUP STUDIO</span>
-              <span className="px-2 py-0.5 rounded-full bg-[#FF4D0A]/20 border border-[#FF4D0A]/40 text-[#FF8738] text-[10px] font-bold tracking-widest uppercase">
-                OPS CONSOLE
+              <span className="font-bold tracking-wider text-base uppercase text-[#F5F5F0]">
+                NORTHUP STUDIO
+              </span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-widest bg-[#C6FF00]/15 text-[#C6FF00] border border-[#C6FF00]/30">
+                CRM
               </span>
             </div>
-            <div className="text-[11px] text-white/50 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Admin: {adminUser?.email || 'admin@northupstudio.com'}</span>
-            </div>
+            <p className="text-[11px] font-mono text-[#A1A1AA] mt-1">
+              Internal Client Console
+            </p>
           </div>
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-4">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            title="Refresh database records"
-            disabled={isRefreshing}
-            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-white/80 hover:text-white transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#FF8738]' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
 
           <button
             type="button"
-            onClick={() => onNavigate('/')}
-            className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] text-white/80 hover:text-white transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+            onClick={() => setMobileMenuOpen(false)}
+            className="md:hidden p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-[#FF8738]" />
-            <span className="hidden sm:inline">Public Site ↗</span>
+            <X className="w-5 h-5" />
           </button>
+        </div>
 
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto font-mono text-xs">
+          {/* Overview */}
           <button
             type="button"
-            onClick={onLogout}
-            className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+            onClick={() => {
+              setActiveTab('overview')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'overview'
+                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
+                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+            }`}
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Logout</span>
+            <div className="flex items-center gap-3">
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Overview</span>
+            </div>
           </button>
-        </div>
-      </header>
 
-      {/* Action Notification Toast */}
-      <AnimatePresence>
-        {actionSuccessMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 right-6 z-50 px-4 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono shadow-xl flex items-center gap-2"
+          {/* Leads */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('leads')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'leads'
+                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
+                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+            }`}
           >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{actionSuccessMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Dashboard Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 space-y-6">
-        {/* 2. KPI METRICS CARDS */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          {/* Total */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-white/[0.08] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-white/50 text-[11px] uppercase tracking-wider mb-2">
-              <span>Total Leads</span>
-              <Layers className="w-4 h-4 text-[#FF8738]" />
+            <div className="flex items-center gap-3">
+              <Inbox className="w-4 h-4" />
+              <span>Leads Pipeline</span>
             </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-white">{metrics.total}</div>
+            {metrics.new > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#C6FF00] text-black">
+                {metrics.new}
+              </span>
+            )}
+          </button>
+
+          {/* Follow-ups / Tasks */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('followups')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'followups'
+                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
+                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <CheckSquare className="w-4 h-4" />
+              <span>Follow-up Queue</span>
+            </div>
+            {followUpLeads.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#1C1C1C] border border-[#2B2B2B] text-[#A1A1AA]">
+                {followUpLeads.length}
+              </span>
+            )}
+          </button>
+
+          {/* Case Studies / Projects */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('projects')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'projects'
+                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
+                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <FolderKanban className="w-4 h-4" />
+              <span>Case Studies</span>
+            </div>
+          </button>
+
+          {/* Settings */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('settings')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
+                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="w-4 h-4" />
+              <span>System &amp; Admin</span>
+            </div>
+          </button>
+        </nav>
+
+        {/* Sidebar Footer: Authenticated User & Actions */}
+        <div className="p-4 border-t border-[#2B2B2B] bg-[#0E0E0E] space-y-3 font-mono text-xs">
+          <div className="p-3 rounded-xl bg-[#141414] border border-[#2B2B2B]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#C6FF00]/15 border border-[#C6FF00]/30 flex items-center justify-center text-[#C6FF00] font-bold text-xs flex-shrink-0">
+                {(adminUser?.email || 'A')[0].toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[#F5F5F0] font-medium truncate text-[11px]">
+                  {adminUser?.email || 'admin@northupstudio.com'}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C6FF00]" />
+                  <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
+                    {adminUser?.role || 'SUPERADMIN'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* New */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-[#FF4D0A]/30 bg-gradient-to-br from-[#FF4D0A]/10 to-transparent flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[#FF8738] text-[11px] uppercase tracking-wider mb-2">
-              <span>New</span>
-              <Inbox className="w-4 h-4 text-[#FF4D0A]" />
-            </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-[#FF8738]">{metrics.new}</div>
-          </div>
-
-          {/* Contacted */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-white/[0.08] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-blue-400/80 text-[11px] uppercase tracking-wider mb-2">
-              <span>Contacted</span>
-              <Send className="w-4 h-4 text-blue-400" />
-            </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-white">{metrics.contacted}</div>
-          </div>
-
-          {/* Qualified */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-white/[0.08] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-amber-400/80 text-[11px] uppercase tracking-wider mb-2">
-              <span>Qualified</span>
-              <Sparkles className="w-4 h-4 text-amber-400" />
-            </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-white">{metrics.qualified}</div>
-          </div>
-
-          {/* Proposal Sent */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-white/[0.08] flex flex-col justify-between">
-            <div className="flex items-center justify-between text-purple-400/80 text-[11px] uppercase tracking-wider mb-2">
-              <span>Proposals</span>
-              <FileText className="w-4 h-4 text-purple-400" />
-            </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-white">{metrics.proposal_sent}</div>
-          </div>
-
-          {/* Won */}
-          <div className="p-4 rounded-2xl bg-[#140F0D] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent flex flex-col justify-between">
-            <div className="flex items-center justify-between text-emerald-400 text-[11px] uppercase tracking-wider mb-2">
-              <span>Won Deals</span>
-              <Trophy className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="font-jaro text-2xl sm:text-3xl text-emerald-400">{metrics.won}</div>
-          </div>
-        </section>
-
-        {/* 3. PIPELINE STATUS TABS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-white/[0.08]">
-          {PIPELINE_STATUSES.map((tab) => {
-            const isSelected = selectedStatus === tab.key
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setSelectedStatus(tab.key)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? 'bg-white text-black font-bold shadow-md'
-                    : 'bg-[#140F0D] text-white/70 hover:text-white border border-white/[0.06] hover:border-white/20'
-                }`}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* 4. SEARCH & FILTER CONTROLS */}
-        <div className="p-4 rounded-2xl bg-[#140F0D] border border-white/[0.08] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Search Form */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search by name, email, or company..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#1B1411] border border-white/[0.08] focus:border-[#FF4D0A] text-xs font-mono text-white placeholder-white/30 focus:outline-none transition-colors"
-              />
-              <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-mono text-white transition-colors cursor-pointer"
-            >
-              Search
-            </button>
-          </form>
-
-          {/* Service & Sort Selectors */}
           <div className="flex items-center gap-2">
-            <select
-              value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-[#1B1411] border border-white/[0.08] text-xs font-mono text-white focus:outline-none focus:border-[#FF4D0A] cursor-pointer"
+            <button
+              type="button"
+              onClick={() => onNavigate('/')}
+              className="flex-1 py-2 px-3 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {SERVICES_LIST.map((srv) => (
-                <option key={srv} value={srv} className="bg-[#140F0D]">
-                  {srv}
-                </option>
-              ))}
-            </select>
+              <ExternalLink className="w-3.5 h-3.5 text-[#C6FF00]" />
+              <span>Website ↗</span>
+            </button>
 
             <button
               type="button"
-              onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-              title={`Sorting: ${sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}`}
-              className="px-3 py-2.5 rounded-xl bg-[#1B1411] border border-white/[0.08] hover:border-white/20 text-xs font-mono text-white/80 hover:text-white flex items-center gap-1.5 cursor-pointer"
+              onClick={onLogout}
+              title="Sign Out"
+              className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 transition-colors cursor-pointer"
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#FF8738]" />
-              <span className="hidden sm:inline">{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </aside>
 
-        {/* Error Alert Banner if fetch fails */}
-        {errorMessage && (
-          <div className="p-4 rounded-2xl bg-[#2A100B] border border-red-500/40 text-red-200 text-xs flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden"
+        />
+      )}
+
+      {/* =========================================================================
+          2. MAIN CONTENT AREA
+         ========================================================================= */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0B0B0B]">
+        {/* Top Header */}
+        <header className="h-16 bg-[#141414] border-b border-[#2B2B2B] px-4 sm:px-8 flex items-center justify-between flex-shrink-0 z-30">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0]"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
             <div>
-              <p className="font-bold">Error loading leads</p>
-              <p className="mt-0.5 text-red-300/80">{errorMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {/* 5. LEADS DATA TABLE */}
-        <section className="rounded-2xl bg-[#140F0D] border border-white/[0.08] overflow-hidden shadow-xl">
-          {isLoading ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-3 text-white/60">
-              <Loader2 className="w-6 h-6 animate-spin text-[#FF4D0A]" />
-              <span className="text-xs">Loading live enquiries from Supabase...</span>
-            </div>
-          ) : leads.length === 0 ? (
-            <div className="py-20 text-center px-4">
-              <Inbox className="w-10 h-10 text-white/20 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-white mb-1">No enquiries found</h3>
-              <p className="text-xs text-white/50 max-w-sm mx-auto">
-                No lead records matched your selected status, service filter, or search criteria.
+              <h1 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0] flex items-center gap-2">
+                {activeTab === 'overview' && 'AGENCY OVERVIEW'}
+                {activeTab === 'leads' && 'LEAD MANAGEMENT & PIPELINE'}
+                {activeTab === 'followups' && 'FOLLOW-UP QUEUE'}
+                {activeTab === 'projects' && 'STUDIO CASE STUDIES'}
+                {activeTab === 'settings' && 'SYSTEM & INFRASTRUCTURE'}
+              </h1>
+              <p className="text-[11px] font-mono text-[#A1A1AA] hidden sm:block">
+                {activeTab === 'overview' && 'Real-time studio CRM metrics, inquiry volume, and conversion health.'}
+                {activeTab === 'leads' && 'Review incoming inquiries, advance stages, and record internal team notes.'}
+                {activeTab === 'followups' && 'Prioritized queue of active leads requiring immediate consultation follow-up.'}
+                {activeTab === 'projects' && 'Production digital platforms and client monographs built by Northup Studio.'}
+                {activeTab === 'settings' && 'Connected Supabase environment, Resend email status, and security gates.'}
               </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-white/[0.08] bg-white/[0.02] text-white/50 font-mono uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4">Client / Company</th>
-                    <th className="py-3.5 px-4">Service Required</th>
-                    <th className="py-3.5 px-4">Budget &amp; Timeline</th>
-                    <th className="py-3.5 px-4">Received</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.06]">
-                  {leads.map((lead) => {
-                    const isUpdating = updatingStatusId === lead.id
-                    return (
-                      <tr
-                        key={lead.id}
-                        className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
-                        onClick={() => openLeadDetail(lead)}
-                      >
-                        {/* Status Column */}
-                        <td className="py-4 px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="relative inline-block">
-                            <select
-                              value={lead.status === 'closed_won' ? 'won' : lead.status === 'closed_lost' ? 'lost' : lead.status}
-                              disabled={isUpdating}
-                              onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
-                            >
-                              <option value="new">New</option>
-                              <option value="contacted">Contacted</option>
-                              <option value="qualified">Qualified</option>
-                              <option value="proposal_sent">Proposal Sent</option>
-                              <option value="won">Won</option>
-                              <option value="lost">Lost</option>
-                            </select>
-                            {getStatusBadge(lead.status)}
-                          </div>
-                        </td>
+          </div>
 
-                        {/* Client Name & Email */}
-                        <td className="py-4 px-4">
-                          <div className="font-bold text-white group-hover:text-[#FF8738] transition-colors">
-                            {lead.name}
+          {/* Quick Header Actions */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Refresh Button */}
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh database records"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#C6FF00]' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+
+            {/* View Mode Toggle (Table vs Cards) */}
+            {(activeTab === 'leads' || activeTab === 'overview') && (
+              <div className="hidden sm:flex items-center bg-[#1C1C1C] border border-[#2B2B2B] rounded-xl p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors ${
+                    viewMode === 'table' ? 'bg-[#2B2B2B] text-[#C6FF00] font-semibold' : 'text-[#A1A1AA] hover:text-[#F5F5F0]'
+                  }`}
+                >
+                  Table
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors ${
+                    viewMode === 'cards' ? 'bg-[#2B2B2B] text-[#C6FF00] font-semibold' : 'text-[#A1A1AA] hover:text-[#F5F5F0]'
+                  }`}
+                >
+                  Cards
+                </button>
+              </div>
+            )}
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              title="Export leads to CSV"
+              className="px-3 py-1.5 rounded-xl bg-[#C6FF00] hover:bg-[#b4ea00] text-black font-mono font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Action Notification Toast */}
+        <AnimatePresence>
+          {actionSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#141414] border border-[#C6FF00]/40 text-[#C6FF00] text-xs font-mono shadow-2xl flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-[#C6FF00]" />
+              <span>{actionSuccessMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Scrollable Workspace */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
+          {/* Global Error Banner */}
+          {errorMessage && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div className="flex-1">{errorMessage}</div>
+              <button
+                type="button"
+                onClick={() => loadLeads(1)}
+                className="px-2.5 py-1 rounded bg-red-500/20 hover:bg-red-500/30 text-xs font-bold"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW A: OVERVIEW TAB
+             ========================================================================= */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* 3. KPI SUMMARY CARDS */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+                {/* Total Leads */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                    <span>Total Enquiries</span>
+                    <Inbox className="w-4 h-4 text-[#A1A1AA]" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#F5F5F0]">
+                    {metrics.total || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
+                    All-time website leads
+                  </p>
+                </div>
+
+                {/* New Enquiries */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#C6FF00]/40 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-[#C6FF00]/10 rounded-bl-full pointer-events-none" />
+                  <div className="flex items-center justify-between text-xs font-mono mb-2">
+                    <span className="text-[#C6FF00] font-semibold">New Enquiries</span>
+                    <Sparkles className="w-4 h-4 text-[#C6FF00]" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#C6FF00]">
+                    {metrics.new || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
+                    Awaiting initial response
+                  </p>
+                </div>
+
+                {/* Qualified */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                    <span>Qualified</span>
+                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-amber-400">
+                    {metrics.qualified || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
+                    High intent &amp; budget match
+                  </p>
+                </div>
+
+                {/* Won Projects */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                    <span>Won Projects</span>
+                    <Trophy className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400">
+                    {metrics.won || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
+                    Engaged studio contracts
+                  </p>
+                </div>
+
+                {/* Lost Leads */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm col-span-2 lg:col-span-1">
+                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                    <span>Lost / Archived</span>
+                    <XCircle className="w-4 h-4 text-zinc-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-zinc-400">
+                    {metrics.lost || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
+                    Out of scope / non-fit
+                  </p>
+                </div>
+              </div>
+
+              {/* Conversion & Pipeline Health Bar */}
+              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm font-mono">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
+                      Pipeline Distribution &amp; Win Rate
+                    </h3>
+                    <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+                      Conversion efficiency: <span className="text-[#C6FF00] font-bold">{winRate}%</span> closed-won engagement rate.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#C6FF00]" />
+                      <span className="text-[#A1A1AA]">New ({metrics.new || 0})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-sky-400" />
+                      <span className="text-[#A1A1AA]">Contacted ({metrics.contacted || 0})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      <span className="text-[#A1A1AA]">Qualified ({metrics.qualified || 0})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-purple-400" />
+                      <span className="text-[#A1A1AA]">Proposal ({metrics.proposal_sent || 0})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="text-[#A1A1AA]">Won ({metrics.won || 0})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multi-segment Progress Bar */}
+                <div className="h-2.5 w-full bg-[#1C1C1C] rounded-full overflow-hidden flex border border-[#2B2B2B]">
+                  {metrics.total > 0 ? (
+                    <>
+                      <div style={{ width: `${(metrics.new / metrics.total) * 100}%` }} className="bg-[#C6FF00] h-full" title="New" />
+                      <div style={{ width: `${(metrics.contacted / metrics.total) * 100}%` }} className="bg-sky-400 h-full" title="Contacted" />
+                      <div style={{ width: `${(metrics.qualified / metrics.total) * 100}%` }} className="bg-amber-400 h-full" title="Qualified" />
+                      <div style={{ width: `${(metrics.proposal_sent / metrics.total) * 100}%` }} className="bg-purple-400 h-full" title="Proposal Sent" />
+                      <div style={{ width: `${(metrics.won / metrics.total) * 100}%` }} className="bg-emerald-400 h-full" title="Won" />
+                      <div style={{ width: `${(metrics.lost / metrics.total) * 100}%` }} className="bg-zinc-600 h-full" title="Lost" />
+                    </>
+                  ) : (
+                    <div className="w-full bg-[#2B2B2B] h-full" />
+                  )}
+                </div>
+              </div>
+
+              {/* Two Column Layout: Recent Leads Queue + Follow-up Priority */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left 2 Cols: Recent Leads */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
+                        Recent Inquiries
+                      </h3>
+                      <p className="font-mono text-[11px] text-[#A1A1AA]">
+                        Latest client submissions through the official website.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('leads')}
+                      className="text-xs font-mono text-[#C6FF00] hover:underline cursor-pointer"
+                    >
+                      View all in Leads Pipeline &rarr;
+                    </button>
+                  </div>
+
+                  {isLoading ? (
+                    <div className="p-8 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#C6FF00] mb-2" />
+                      Loading recent enquiries...
+                    </div>
+                  ) : leads.length === 0 ? (
+                    <div className="p-8 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
+                      No enquiries recorded yet.
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-[#141414] border border-[#2B2B2B] overflow-hidden divide-y divide-[#2B2B2B]">
+                      {leads.slice(0, 5).map((lead) => (
+                        <div
+                          key={lead.id}
+                          className="p-4 hover:bg-[#1C1C1C] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs cursor-pointer"
+                          onClick={() => openLeadDetail(lead)}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[#F5F5F0] truncate">
+                                {lead.name}
+                              </span>
+                              {lead.company && (
+                                <span className="text-[11px] text-[#A1A1AA]">
+                                  &middot; {lead.company}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 text-[11px] text-[#A1A1AA]">
+                              <span>{lead.service || 'Web Platform'}</span>
+                              {lead.budget && (
+                                <>
+                                  <span>&middot;</span>
+                                  <span className="text-[#C6FF00]">{lead.budget}</span>
+                                </>
+                              )}
+                              <span>&middot;</span>
+                              <span>{formatDate(lead.created_at)}</span>
+                            </div>
                           </div>
-                          <div className="text-white/50 text-[11px] flex items-center gap-2 mt-0.5">
-                            <span>{lead.email}</span>
+
+                          <div className="flex items-center gap-3">
+                            {getStatusBadge(lead.status)}
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                copyToClipboard(lead.email)
+                                openLeadDetail(lead)
                               }}
-                              title="Copy email address"
-                              className="opacity-0 group-hover:opacity-100 hover:text-white transition-opacity text-white/40 cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-[#1C1C1C] hover:bg-[#2B2B2B] text-[#F5F5F0] text-[11px] border border-[#2B2B2B]"
                             >
-                              {copiedEmail === lead.email ? (
-                                <Check className="w-3 h-3 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
+                              Review ↗
                             </button>
                           </div>
-                          {lead.company && (
-                            <div className="text-[11px] text-[#A69E98] mt-0.5 font-medium flex items-center gap-1">
-                              <Building2 className="w-3 h-3 text-[#FF4D0A]" />
-                              <span>{lead.company}</span>
-                            </div>
-                          )}
-                        </td>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                        {/* Service Required */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white/90 text-[11px]">
-                            {lead.service}
-                          </span>
-                        </td>
+                {/* Right 1 Col: Follow-up Queue */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
+                      Follow-up Queue
+                    </h3>
+                    <p className="font-mono text-[11px] text-[#A1A1AA]">
+                      Inquiries awaiting consultation response.
+                    </p>
+                  </div>
 
-                        {/* Budget & Timeline */}
-                        <td className="py-4 px-4 whitespace-nowrap text-white/70">
-                          <div>{lead.budget || 'Flexible'}</div>
-                          <div className="text-[11px] text-white/40 mt-0.5">{lead.timeline || 'Flexible'}</div>
-                        </td>
+                  <div className="p-4 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3 font-mono text-xs">
+                    {followUpLeads.length === 0 ? (
+                      <div className="py-8 text-center text-[#A1A1AA]">
+                        <CheckCircle2 className="w-8 h-8 text-[#C6FF00] mx-auto mb-2 opacity-80" />
+                        <p className="font-semibold text-[#F5F5F0]">All caught up!</p>
+                        <p className="text-[11px] text-[#A1A1AA] mt-1">
+                          No pending client follow-ups in queue.
+                        </p>
+                      </div>
+                    ) : (
+                      followUpLeads.slice(0, 4).map((lead) => (
+                        <div
+                          key={lead.id}
+                          onClick={() => openLeadDetail(lead)}
+                          className="p-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-[#F5F5F0] truncate">
+                              {lead.name}
+                            </span>
+                            {getStatusBadge(lead.status)}
+                          </div>
+                          <p className="text-[11px] text-[#A1A1AA] truncate">
+                            {lead.service} {lead.budget ? `(${lead.budget})` : ''}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between text-[10px] text-[#A1A1AA]">
+                            <span>Received: {formatDate(lead.created_at)}</span>
+                            <span className="text-[#C6FF00] hover:underline">Open Drawer &rarr;</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-                        {/* Date Received */}
-                        <td className="py-4 px-4 whitespace-nowrap text-white/50 text-[11px]">
-                          {new Date(lead.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </td>
+          {/* =========================================================================
+              VIEW B: LEADS PIPELINE TAB
+             ========================================================================= */}
+          {activeTab === 'leads' && (
+            <div className="space-y-6">
+              {/* Pipeline Status Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#2B2B2B] font-mono text-xs">
+                {PIPELINE_STATUSES.map((status) => {
+                  const count =
+                    status.key === 'all'
+                      ? metrics.total || 0
+                      : metrics[status.key] || 0
 
-                        {/* Action Details */}
-                        <td className="py-4 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
+                  return (
+                    <button
+                      key={status.key}
+                      type="button"
+                      onClick={() => setSelectedStatus(status.key)}
+                      className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                        selectedStatus === status.key
+                          ? 'bg-[#141414] text-[#C6FF00] border border-[#C6FF00]/40 font-bold shadow-sm'
+                          : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#141414]'
+                      }`}
+                    >
+                      <span>{status.label}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                          selectedStatus === status.key
+                            ? 'bg-[#C6FF00] text-black font-bold'
+                            : 'bg-[#1C1C1C] text-[#A1A1AA]'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Filters Toolbar */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 font-mono text-xs">
+                {/* Search Bar */}
+                <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search leads by name, email, company..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA] text-xs focus:outline-none transition-colors"
+                  />
+                  <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </form>
+
+                <div className="flex items-center gap-2.5">
+                  {/* Service Filter */}
+                  <div className="relative">
+                    <select
+                      value={selectedService}
+                      onChange={(e) => setSelectedService(e.target.value)}
+                      className="appearance-none pl-3 pr-8 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] text-xs focus:outline-none focus:border-[#C6FF00] cursor-pointer"
+                    >
+                      {SERVICES_LIST.map((srv) => (
+                        <option key={srv} value={srv} className="bg-[#141414] text-[#F5F5F0]">
+                          {srv}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#A1A1AA] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+
+                  {/* Sort Order */}
+                  <button
+                    type="button"
+                    onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                    className="px-3 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#C6FF00]" />
+                    <span>{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Data View: Table or Cards */}
+              {isLoading ? (
+                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#C6FF00] mb-3" />
+                  Retrieving leads from Supabase database...
+                </div>
+              ) : leads.length === 0 ? (
+                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
+                  <Inbox className="w-10 h-10 mx-auto text-[#A1A1AA] mb-3 opacity-60" />
+                  <p className="text-sm font-bold text-[#F5F5F0]">No matching enquiries found</p>
+                  <p className="mt-1 text-[#A1A1AA]">
+                    {search ? `No records matched search term "${search}".` : 'No leads match the selected filter criteria.'}
+                  </p>
+                  {(search || selectedStatus !== 'all' || selectedService !== 'All Services') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch('')
+                        setSelectedStatus('all')
+                        setSelectedService('All Services')
+                      }}
+                      className="mt-4 px-4 py-2 rounded-xl bg-[#1C1C1C] hover:bg-[#2B2B2B] text-[#C6FF00] text-xs font-bold border border-[#2B2B2B] transition-colors"
+                    >
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
+              ) : viewMode === 'table' ? (
+                /* TABLE VIEW */
+                <div className="rounded-2xl bg-[#141414] border border-[#2B2B2B] overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-mono text-xs">
+                      <thead className="bg-[#0E0E0E] text-[#A1A1AA] border-b border-[#2B2B2B] uppercase text-[10px] tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4">Client / Brand</th>
+                          <th className="py-3 px-4">Contact</th>
+                          <th className="py-3 px-4">Service</th>
+                          <th className="py-3 px-4">Budget &amp; Timeline</th>
+                          <th className="py-3 px-4">Date</th>
+                          <th className="py-3 px-4">Pipeline Status</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#2B2B2B]">
+                        {leads.map((lead) => (
+                          <tr
+                            key={lead.id}
+                            className="hover:bg-[#1C1C1C]/70 transition-colors cursor-pointer group"
                             onClick={() => openLeadDetail(lead)}
-                            className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-[#FF4D0A] hover:text-white border border-white/[0.08] text-white/80 transition-all text-xs cursor-pointer"
                           >
-                            Inspect Lead
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                            {/* Client & Company */}
+                            <td className="py-3.5 px-4">
+                              <div className="font-bold text-[#F5F5F0] group-hover:text-[#C6FF00] transition-colors">
+                                {lead.name}
+                              </div>
+                              {lead.company && (
+                                <div className="text-[11px] text-[#A1A1AA]">
+                                  {lead.company}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Contact Email */}
+                            <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-1.5">
+                                <a
+                                  href={`mailto:${lead.email}`}
+                                  className="text-[#F5F5F0] hover:text-[#C6FF00] hover:underline"
+                                >
+                                  {lead.email}
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(lead.email)}
+                                  title="Copy Email"
+                                  className="p-1 rounded text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#2B2B2B]"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </td>
+
+                            {/* Service */}
+                            <td className="py-3.5 px-4">
+                              <span className="px-2 py-0.5 rounded-md bg-[#1C1C1C] border border-[#2B2B2B] text-[11px] text-[#F5F5F0]">
+                                {lead.service || 'Web Platform'}
+                              </span>
+                            </td>
+
+                            {/* Budget & Timeline */}
+                            <td className="py-3.5 px-4 text-[11px]">
+                              <div className="text-[#C6FF00] font-medium">
+                                {lead.budget || 'Unspecified'}
+                              </div>
+                              <div className="text-[#A1A1AA]">
+                                {lead.timeline || 'Flexible'}
+                              </div>
+                            </td>
+
+                            {/* Date */}
+                            <td className="py-3.5 px-4 text-[11px] text-[#A1A1AA]">
+                              {formatDate(lead.created_at)}
+                            </td>
+
+                            {/* Status Selector */}
+                            <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                              <div className="relative inline-block">
+                                <select
+                                  value={lead.status}
+                                  disabled={updatingStatusId === lead.id}
+                                  onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                                  className="appearance-none pl-2.5 pr-6 py-1 rounded-full text-[11px] font-mono font-medium uppercase tracking-wider bg-[#1C1C1C] border border-[#2B2B2B] text-[#F5F5F0] focus:border-[#C6FF00] focus:outline-none cursor-pointer"
+                                >
+                                  <option value="new">● New</option>
+                                  <option value="contacted">● Contacted</option>
+                                  <option value="qualified">● Qualified</option>
+                                  <option value="proposal_sent">● Proposal Sent</option>
+                                  <option value="won">● Won</option>
+                                  <option value="lost">● Lost</option>
+                                </select>
+                                <ChevronDown className="w-3 h-3 text-[#A1A1AA] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                              </div>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => openLeadDetail(lead)}
+                                className="px-3 py-1 rounded-lg bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#F5F5F0] text-[11px] hover:text-[#C6FF00] transition-colors"
+                              >
+                                Review ↗
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                /* CARDS VIEW */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {leads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      onClick={() => openLeadDetail(lead)}
+                      className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-all flex flex-col justify-between font-mono text-xs cursor-pointer group shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          {getStatusBadge(lead.status)}
+                          <span className="text-[11px] text-[#A1A1AA]">
+                            {formatDate(lead.created_at)}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-[#F5F5F0] group-hover:text-[#C6FF00] transition-colors mb-0.5">
+                          {lead.name}
+                        </h4>
+                        {lead.company && (
+                          <p className="text-[11px] text-[#A1A1AA] mb-2">{lead.company}</p>
+                        )}
+
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          <span className="px-2 py-0.5 rounded bg-[#1C1C1C] border border-[#2B2B2B] text-[10px] text-[#F5F5F0]">
+                            {lead.service || 'Web Platform'}
+                          </span>
+                          {lead.budget && (
+                            <span className="px-2 py-0.5 rounded bg-[#C6FF00]/10 border border-[#C6FF00]/30 text-[10px] text-[#C6FF00]">
+                              {lead.budget}
+                            </span>
+                          )}
+                          {lead.timeline && (
+                            <span className="px-2 py-0.5 rounded bg-[#1C1C1C] border border-[#2B2B2B] text-[10px] text-[#A1A1AA]">
+                              {lead.timeline}
+                            </span>
+                          )}
+                        </div>
+
+                        {lead.project_description && (
+                          <p className="text-[11px] text-[#A1A1AA] line-clamp-2 leading-relaxed bg-[#0E0E0E] p-2.5 rounded-xl border border-[#2B2B2B]/60 mb-4">
+                            {lead.project_description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-[#2B2B2B] flex items-center justify-between">
+                        <span className="text-[11px] text-[#A1A1AA] truncate max-w-[150px]">
+                          {lead.email}
+                        </span>
+                        <span className="text-[11px] text-[#C6FF00] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          <span>Details</span>
+                          <span>&rarr;</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between font-mono text-xs text-[#A1A1AA] pt-2">
+                  <div>
+                    Showing {(pagination.page - 1) * pagination.pageSize + 1} to{' '}
+                    {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of{' '}
+                    {pagination.totalCount} enquiries
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={pagination.page <= 1}
+                      onClick={() => loadLeads(pagination.page - 1)}
+                      className="p-2 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1C]"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[#F5F5F0] px-2 font-bold">
+                      Page {pagination.page} of {pagination.totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={pagination.page >= pagination.totalPages}
+                      onClick={() => loadLeads(pagination.page + 1)}
+                      className="p-2 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1C]"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Pagination Footer */}
-          {!isLoading && pagination.totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-white/[0.08] flex items-center justify-between text-xs text-white/60">
+          {/* =========================================================================
+              VIEW C: FOLLOW-UP QUEUE TAB
+             ========================================================================= */}
+          {activeTab === 'followups' && (
+            <div className="space-y-6">
               <div>
-                Showing page <span className="text-white font-bold">{pagination.page}</span> of{' '}
-                <span className="text-white font-bold">{pagination.totalPages}</span> ({pagination.totalCount} total)
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0]">
+                  Client Follow-up Priority Queue
+                </h2>
+                <p className="text-xs font-mono text-[#A1A1AA] mt-1">
+                  Active inquiries awaiting consultation scheduling or proposal submission.
+                </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={pagination.page <= 1}
-                  onClick={() => loadLeads(pagination.page - 1)}
-                  className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => loadLeads(pagination.page + 1)}
-                  className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+              {followUpLeads.length === 0 ? (
+                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono">
+                  <ShieldCheck className="w-12 h-12 text-[#C6FF00] mx-auto mb-3 opacity-90" />
+                  <h3 className="text-base font-bold text-[#F5F5F0]">All Follow-ups Completed</h3>
+                  <p className="text-xs text-[#A1A1AA] max-w-md mx-auto mt-1 leading-relaxed">
+                    No active inquiries currently require follow-up. All received leads have been addressed or advanced through the pipeline.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                  {followUpLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-all flex flex-col justify-between shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          {getStatusBadge(lead.status)}
+                          <span className="text-[11px] text-[#A1A1AA]">
+                            Received: {formatDate(lead.created_at)}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-[#F5F5F0] mb-0.5">
+                          {lead.name}
+                        </h4>
+                        {lead.company && (
+                          <p className="text-[11px] text-[#A1A1AA] mb-2">{lead.company}</p>
+                        )}
+
+                        <div className="p-3 rounded-xl bg-[#0E0E0E] border border-[#2B2B2B] space-y-1.5 text-[11px] my-3">
+                          <div className="flex justify-between">
+                            <span className="text-[#A1A1AA]">Email:</span>
+                            <a href={`mailto:${lead.email}`} className="text-[#F5F5F0] hover:text-[#C6FF00] hover:underline">
+                              {lead.email}
+                            </a>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#A1A1AA]">Service:</span>
+                            <span className="text-[#F5F5F0]">{lead.service}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#A1A1AA]">Budget:</span>
+                            <span className="text-[#C6FF00]">{lead.budget || 'Flexible'}</span>
+                          </div>
+                        </div>
+
+                        {lead.project_description && (
+                          <p className="text-[11px] text-[#A1A1AA] line-clamp-3 leading-relaxed mb-4">
+                            "{lead.project_description}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-[#2B2B2B] flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStatusChange(lead.id, 'contacted')}
+                          className="px-3 py-1.5 rounded-lg bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-[11px] transition-colors"
+                        >
+                          Mark Contacted
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openLeadDetail(lead)}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#C6FF00] hover:bg-[#b4ea00] text-black font-bold text-[11px] transition-colors"
+                        >
+                          Review &amp; Notes ↗
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW D: CASE STUDIES / PROJECTS TAB
+             ========================================================================= */}
+          {activeTab === 'projects' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0]">
+                  Studio Production Monographs
+                </h2>
+                <p className="text-xs font-mono text-[#A1A1AA] mt-1">
+                  Verified original client projects and public portfolio case studies.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
+                {STUDIO_PROJECTS.map((proj) => (
+                  <div
+                    key={proj.route}
+                    className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] flex flex-col justify-between shadow-sm"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C6FF00]/15 text-[#C6FF00] border border-[#C6FF00]/30">
+                          {proj.tag}
+                        </span>
+                        <span className="text-[10px] text-[#A1A1AA]">{proj.category}</span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-[#F5F5F0] mb-1.5">
+                        {proj.title}
+                      </h3>
+                      <p className="text-xs text-[#A1A1AA] leading-relaxed mb-4">
+                        {proj.description}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigate(proj.route)}
+                      className="w-full py-2.5 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#F5F5F0] hover:text-[#C6FF00] text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Inspect Live Study</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
-        </section>
-      </main>
 
-      {/* 6. LEAD DETAIL & INTERNAL NOTES DRAWER */}
+          {/* =========================================================================
+              VIEW E: SETTINGS & INFRASTRUCTURE TAB
+             ========================================================================= */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 max-w-3xl font-mono text-xs">
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-[#F5F5F0]">
+                  System Infrastructure &amp; Security
+                </h2>
+                <p className="text-[#A1A1AA] mt-1">
+                  Active backend services, security boundaries, and authorization allowlists.
+                </p>
+              </div>
+
+              {/* Admin Identity Card */}
+              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3">
+                <h3 className="text-xs font-bold uppercase text-[#C6FF00] flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Authenticated Administrator</span>
+                </h3>
+                <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-[#A1A1AA]">Email:</span>
+                    <span className="text-[#F5F5F0] font-bold">{adminUser?.email || 'northup4work@gmail.com'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#A1A1AA]">Role:</span>
+                    <span className="text-[#C6FF00] uppercase font-bold">{adminUser?.role || 'superadmin'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#A1A1AA]">Security Scheme:</span>
+                    <span className="text-[#F5F5F0]">Bearer JWT + Server-Side Allowlist</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Connected Services */}
+              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3">
+                <h3 className="text-xs font-bold uppercase text-[#F5F5F0] flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#C6FF00]" />
+                  <span>Integrated Production Services</span>
+                </h3>
+
+                <div className="space-y-2.5">
+                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-[#F5F5F0]">Supabase Database &amp; Auth</p>
+                      <p className="text-[11px] text-[#A1A1AA]">Encrypted PostgreSQL with Row-Level Security (RLS)</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      CONNECTED
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-[#F5F5F0]">Resend Email Automation</p>
+                      <p className="text-[11px] text-[#A1A1AA]">Admin alerts &amp; client acknowledgements</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      ACTIVE
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-[#F5F5F0]">Vercel Serverless Functions</p>
+                      <p className="text-[11px] text-[#A1A1AA]">Node runtime API endpoints: /api/contact, /api/admin/*</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      DEPLOYED
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* =========================================================================
+          3. LEAD DETAIL SLIDE-OUT DRAWER
+         ========================================================================= */}
       <AnimatePresence>
         {selectedLead && (
-          <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="fixed inset-0 z-50 overflow-hidden font-mono">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -616,190 +1477,203 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
 
-            {/* Drawer Container */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="relative w-full max-w-xl bg-[#140F0D] border-l border-white/[0.12] h-full shadow-2xl flex flex-col z-10 overflow-hidden"
-            >
-              {/* Drawer Header */}
-              <div className="px-6 py-5 border-b border-white/[0.08] flex items-center justify-between bg-[#1A1310]">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    {getStatusBadge(selectedLead.status)}
-                    <span className="text-[11px] text-white/40">ID: {selectedLead.id.slice(0, 8)}...</span>
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                className="w-screen max-w-xl bg-[#141414] border-l border-[#2B2B2B] flex flex-col shadow-2xl text-[#F5F5F0] overflow-hidden"
+              >
+                {/* Drawer Header */}
+                <div className="p-6 border-b border-[#2B2B2B] flex items-center justify-between bg-[#111111]">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-widest text-[#C6FF00] uppercase">
+                      ENQUIRY DOSSIER
+                    </span>
+                    <h2 className="text-lg font-bold text-[#F5F5F0] mt-0.5 truncate max-w-xs sm:max-w-md">
+                      {selectedLead.name}
+                    </h2>
                   </div>
-                  <h2 className="font-jaro text-2xl uppercase tracking-wider text-white">
-                    {selectedLead.name}
-                  </h2>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`mailto:${selectedLead.email}?subject=Regarding%20Your%20Project%20Enquiry%20%7C%20Northup%20Studio`}
+                      className="px-3 py-1.5 rounded-xl bg-[#C6FF00] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#b4ea00] transition-colors"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Email Client</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLead(null)}
+                      className="p-2 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] text-[#A1A1AA] hover:text-[#F5F5F0]"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedLead(null)}
-                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+                  {/* Status Lifecycle Selector */}
+                  <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#A1A1AA] font-bold uppercase tracking-wider text-[11px]">
+                        Pipeline Stage:
+                      </span>
+                      {getStatusBadge(selectedLead.status)}
+                    </div>
 
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-                {/* Status Updater Card */}
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
-                  <label className="block text-[11px] uppercase tracking-wider text-white/50 mb-2">
-                    Update Pipeline Status
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost'].map((st) => {
-                      const isActive = selectedLead.status === st || (st === 'won' && selectedLead.status === 'closed_won') || (st === 'lost' && selectedLead.status === 'closed_lost')
-                      return (
+                    <div className="mt-3 grid grid-cols-3 gap-1.5">
+                      {['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost'].map((st) => (
                         <button
                           key={st}
                           type="button"
                           onClick={() => handleStatusChange(selectedLead.id, st)}
-                          className={`py-2 px-2.5 rounded-lg text-xs font-mono capitalize transition-all border cursor-pointer ${
-                            isActive
-                              ? 'bg-[#FF4D0A] text-white font-bold border-[#FF8738]'
-                              : 'bg-white/[0.04] text-white/70 hover:text-white border-white/[0.08]'
+                          className={`py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors border ${
+                            selectedLead.status === st
+                              ? 'bg-[#C6FF00] text-black border-[#C6FF00]'
+                              : 'bg-[#141414] text-[#A1A1AA] border-[#2B2B2B] hover:text-[#F5F5F0]'
                           }`}
                         >
                           {st.replace('_', ' ')}
                         </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Key Overview Grid */}
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <div className="text-[10px] uppercase text-white/40 mb-1">Email Address</div>
-                    <a
-                      href={`mailto:${selectedLead.email}`}
-                      className="text-[#FF8738] hover:underline font-medium break-all"
-                    >
-                      {selectedLead.email}
-                    </a>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <div className="text-[10px] uppercase text-white/40 mb-1">Company / Brand</div>
-                    <div className="text-white font-medium">{selectedLead.company || 'Not provided'}</div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <div className="text-[10px] uppercase text-white/40 mb-1">Requested Service</div>
-                    <div className="text-white font-medium">{selectedLead.service}</div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                    <div className="text-[10px] uppercase text-white/40 mb-1">Budget / Timeline</div>
-                    <div className="text-white font-medium">
-                      {selectedLead.budget || 'Flexible'} · {selectedLead.timeline || 'Flexible'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Project Description */}
-                <div>
-                  <h4 className="text-[11px] uppercase tracking-wider text-white/50 mb-2">Project Description</h4>
-                  <div className="p-4 rounded-xl bg-black/40 border border-white/[0.08] text-xs text-[#D3CBC4] leading-relaxed whitespace-pre-wrap">
-                    {selectedLead.project_description}
-                  </div>
-                </div>
-
-                {/* Diagnostics / Metadata */}
-                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-[11px] text-white/40 space-y-1">
-                  <div>Source: <span className="text-white/60">{selectedLead.source || 'website_contact_form'}</span></div>
-                  <div>Received: <span className="text-white/60">{new Date(selectedLead.created_at).toLocaleString()}</span></div>
-                  {selectedLead.metadata?.ip_hash && (
-                    <div>Client IP Hash: <span className="text-white/60">{selectedLead.metadata.ip_hash}</span></div>
-                  )}
-                </div>
-
-                {/* Internal Team Notes Section */}
-                <div className="border-t border-white/[0.08] pt-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs uppercase font-bold text-white tracking-wider flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#FF4D0A]" />
-                      <span>Private Internal Notes</span>
-                    </h4>
-                    <span className="text-[11px] text-white/40">{notes.length} notes</span>
-                  </div>
-
-                  {/* Add Note Form */}
-                  <form onSubmit={handleCreateNote} className="space-y-2">
-                    <textarea
-                      rows={3}
-                      placeholder="Add private note regarding phone consultation, proposal status, or scope..."
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      disabled={isAddingNote}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#1B1411] border border-white/[0.08] focus:border-[#FF4D0A] text-xs font-mono text-white placeholder-white/30 focus:outline-none resize-none"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={isAddingNote || !newNote.trim()}
-                        className="px-4 py-2 rounded-xl bg-white text-black font-keania text-xs tracking-wider uppercase hover:bg-[#FF4D0A] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
-                      >
-                        {isAddingNote ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Saving...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Post Note</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Notes List */}
-                  {isLoadingNotes ? (
-                    <div className="py-6 text-center text-xs text-white/50">
-                      <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 text-[#FF4D0A]" />
-                      <span>Loading notes...</span>
-                    </div>
-                  ) : notes.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-white/40">
-                      No internal notes recorded yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {notes.map((note) => (
-                        <div
-                          key={note.id}
-                          className="p-3.5 rounded-xl bg-[#1B1411] border border-white/[0.06] text-xs space-y-2 group"
-                        >
-                          <div className="flex items-center justify-between text-[11px] text-white/40">
-                            <span className="font-bold text-[#FF8738]">{note.author_email}</span>
-                            <div className="flex items-center gap-2">
-                              <span>{new Date(note.created_at).toLocaleDateString()}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteNote(note.id)}
-                                title="Delete note"
-                                className="opacity-0 group-hover:opacity-100 hover:text-red-400 text-white/40 transition-opacity cursor-pointer"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-[#D3CBC4] leading-relaxed whitespace-pre-wrap">{note.content}</p>
-                        </div>
                       ))}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Client Details Grid */}
+                  <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
+                      <span className="text-[#A1A1AA]">Work Email:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[#F5F5F0] font-bold">{selectedLead.email}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(selectedLead.email)}
+                          className="p-1 rounded text-[#A1A1AA] hover:text-[#F5F5F0]"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
+                      <span className="text-[#A1A1AA]">Company / Brand:</span>
+                      <span className="text-[#F5F5F0] font-bold">{selectedLead.company || 'Individual / Non-disclosed'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
+                      <span className="text-[#A1A1AA]">Service Requested:</span>
+                      <span className="text-[#C6FF00] font-bold">{selectedLead.service || 'Web Platform'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
+                      <span className="text-[#A1A1AA]">Estimated Budget:</span>
+                      <span className="text-[#F5F5F0] font-bold">{selectedLead.budget || 'Flexible'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
+                      <span className="text-[#A1A1AA]">Desired Timeline:</span>
+                      <span className="text-[#F5F5F0] font-bold">{selectedLead.timeline || 'Flexible'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#A1A1AA]">Received At:</span>
+                      <span className="text-[#A1A1AA]">{formatDate(selectedLead.created_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Full Enquiry Message */}
+                  <div>
+                    <h3 className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider mb-2">
+                      Client Project Scope &amp; Message:
+                    </h3>
+                    <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-xs leading-relaxed text-[#F5F5F0] whitespace-pre-wrap">
+                      {selectedLead.project_description || 'No additional scope notes provided.'}
+                    </div>
+                  </div>
+
+                  {/* Internal Team Notes */}
+                  <div className="pt-2 border-t border-[#2B2B2B] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[11px] font-bold text-[#C6FF00] uppercase tracking-wider flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Private Internal Notes</span>
+                      </h3>
+                      <span className="text-[10px] text-[#A1A1AA]">
+                        {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+                      </span>
+                    </div>
+
+                    {/* New Note Form */}
+                    <form onSubmit={handleCreateNote} className="space-y-2">
+                      <textarea
+                        rows={3}
+                        maxLength={3000}
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        placeholder="Add private team notes, call takeaways, or deal scopes..."
+                        className="w-full p-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA] text-xs focus:outline-none transition-colors"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-[#A1A1AA]">
+                          {newNote.length}/3000
+                        </span>
+                        <button
+                          type="submit"
+                          disabled={isAddingNote || !newNote.trim()}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#C6FF00] hover:bg-[#b4ea00] disabled:opacity-40 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {isAddingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                          <span>Add Note</span>
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* Notes List */}
+                    {isLoadingNotes ? (
+                      <div className="py-6 text-center text-[#A1A1AA]">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#C6FF00] mb-2" />
+                        Loading internal notes...
+                      </div>
+                    ) : notes.length === 0 ? (
+                      <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-center text-[#A1A1AA] text-[11px]">
+                        No internal notes recorded yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {notes.map((note) => (
+                          <div
+                            key={note.id}
+                            className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between text-[10px] text-[#A1A1AA]">
+                              <span>{note.author_email}</span>
+                              <div className="flex items-center gap-2">
+                                <span>{formatDate(note.created_at)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="text-red-400 hover:text-red-300 p-0.5"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                            <p className="text-xs text-[#F5F5F0] whitespace-pre-wrap leading-relaxed">
+                              {note.note}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
