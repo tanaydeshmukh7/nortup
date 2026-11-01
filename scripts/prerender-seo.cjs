@@ -212,4 +212,21 @@ for (const [route, page] of Object.entries(SEO_PAGES)) {
   console.log(`[prerender-seo] Generated ${targetFile}`);
 }
 
+// Generate static HTML for /admin route so Vercel can serve it directly with zero rewrite latency
+const adminDir = path.join(distPath, 'admin');
+fs.mkdirSync(adminDir, { recursive: true });
+let adminHtml = template;
+adminHtml = adminHtml.replace(/<title>.*?<\/title>/i, `<title>Admin Console | Northup Studio</title>`);
+if (adminHtml.includes('name="robots"')) {
+  adminHtml = adminHtml.replace(
+    /<meta\s+name=["']robots["']\s+content=["'][^"']*["']\s*\/?>/i,
+    `<meta name="robots" content="noindex, nofollow" />`
+  );
+} else {
+  adminHtml = adminHtml.replace('</head>', '  <meta name="robots" content="noindex, nofollow" />\n  </head>');
+}
+const adminTargetFile = path.join(adminDir, 'index.html');
+fs.writeFileSync(adminTargetFile, adminHtml, 'utf8');
+console.log(`[prerender-seo] Generated ${adminTargetFile}`);
+
 console.log('[prerender-seo] Successfully pre-rendered static SEO HTML for all case study routes!');
