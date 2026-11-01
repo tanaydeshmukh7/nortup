@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { sendLeadEmails } from './_lib/email.js'
 
 // Allowed choices
 const ALLOWED_SERVICES = [
@@ -242,43 +243,28 @@ export default async function handler(req, res) {
       })
     }
 
-    // 6. Optional Email Notification via Resend (Safe & Non-blocking)
-    const resendApiKey = process.env.RESEND_API_KEY
-    const notificationEmail = process.env.CONTACT_NOTIFICATION_EMAIL || 'northup4work@gmail.com'
-
-    if (resendApiKey) {
-      try {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'Northup Studio <enquiries@northupstudio.vercel.app>',
-            to: [notificationEmail],
-            reply_to: rawEmail,
-            subject: `[New Lead] ${rawService}: ${rawName} (${rawCompany || 'Individual'})`,
-            html: `
-              <h2>New Project Enquiry via Northup Studio</h2>
-              <p><strong>Name:</strong> ${rawName}</p>
-              <p><strong>Email:</strong> ${rawEmail}</p>
-              <p><strong>Company:</strong> ${rawCompany || 'Not specified'}</p>
-              <p><strong>Service:</strong> ${rawService}</p>
-              <p><strong>Budget:</strong> ${rawBudget || 'Not specified'}</p>
-              <p><strong>Timeline:</strong> ${rawTimeline || 'Not specified'}</p>
-              <hr />
-              <p><strong>Project Description:</strong></p>
-              <p>${rawDescription.replace(/\n/g, '<br />')}</p>
-              <hr />
-              <p><small>Lead ID: ${data.id} | Timestamp: ${data.created_at}</small></p>
-            `,
-          }),
-        })
-      } catch (emailErr) {
-        // Log safe warning; never fail the user's saved lead
-        console.warn('[Server API /api/contact] Email notification error (lead was saved).')
-      }
+    // 6. Automated Email Notifications via Resend (Safe & Non-blocking)
+    const siteUrl = process.env.VITE_SITE_URL || 'https://northupstudio.vercel.app'
+    let emailStatus = { skipped: true }
+    try {
+      emailStatus = await sendLeadEmails({
+        lead: {
+          id: data.id,
+          created_at: data.created_at,
+          name: rawName,
+          email: rawEmail,
+          company: rawCompany,
+          service: rawService,
+          budget: rawBudget,
+          timeline: rawTimeline,
+          project_description: rawDescription,
+          source: payload.source,
+        },
+        siteUrl,
+      })
+    } catch (emailErr) {
+      // Ensure failure never disrupts successful lead persistence
+      console.warn('[Server API /api/contact] Email notification error (lead was saved).')
     }
 
     return res.status(200).json({

@@ -17,6 +17,7 @@ import AtelierCaseStudy from './pages/AtelierCaseStudy'
 import MaisonCaseStudy from './pages/MaisonCaseStudy'
 import AurexCaseStudy from './pages/AurexCaseStudy'
 import DropCultCaseStudy from './pages/DropCultCaseStudy'
+import AdminView from './components/admin/AdminView'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
@@ -32,11 +33,13 @@ export default function App() {
       if (path === '/work/maison-de-sucre') return path
       if (path === '/work/aurex-performance-club') return path
       if (path === '/work/drop-cult') return path
+      if (path === '/admin') return path
       if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
       if (window.location.hash.includes('work/atelier-estates')) return '/work/atelier-estates'
       if (window.location.hash.includes('work/maison-de-sucre')) return '/work/maison-de-sucre'
       if (window.location.hash.includes('work/aurex-performance-club')) return '/work/aurex-performance-club'
       if (window.location.hash.includes('work/drop-cult')) return '/work/drop-cult'
+      if (window.location.hash.includes('admin')) return '/admin'
       return path
     }
     return '/'
@@ -132,12 +135,12 @@ export default function App() {
   // Pause Lenis when modal is open to prevent background scrolling
   useEffect(() => {
     if (!lenisRef.current) return
-    if (contactModalOpen || auditModalOpen || privacyModalOpen) {
+    if (contactModalOpen || auditModalOpen || privacyModalOpen || currentRoute === '/admin' || currentRoute.startsWith('/admin')) {
       lenisRef.current.stop()
     } else {
       lenisRef.current.start()
     }
-  }, [contactModalOpen, auditModalOpen, privacyModalOpen])
+  }, [contactModalOpen, auditModalOpen, privacyModalOpen, currentRoute])
 
   // Central Navigation Handler
   const handleNavigate = (to) => {
@@ -211,21 +214,31 @@ export default function App() {
     currentRoute === '/work/drop-cult' || 
     currentRoute.startsWith('/work/drop-cult')
 
+  const isAdminRoute = 
+    currentRoute === '/admin' || 
+    currentRoute.startsWith('/admin')
+
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
       {/* Desktop Custom Cursor */}
       <SEO route={currentRoute} />
-      <CustomCursor />
+      {!isAdminRoute && <CustomCursor />}
 
-      {/* Fixed Viewport Floating Navbar (Persistent across entire website) */}
-      <Navbar 
-        onOpenContact={handleOpenContact} 
-        onNavigate={handleNavigate}
-        currentRoute={currentRoute}
-      />
+      {/* Fixed Viewport Floating Navbar (Persistent across public website) */}
+      {!isAdminRoute && (
+        <Navbar 
+          onOpenContact={handleOpenContact} 
+          onNavigate={handleNavigate}
+          currentRoute={currentRoute}
+        />
+      )}
 
-      {/* Conditional Rendering between Homepage and Dedicated Case Study */}
-      {isArulisCaseStudy ? (
+      {/* Conditional Rendering between Admin, Dedicated Case Studies, and Homepage */}
+      {isAdminRoute ? (
+        <main className="w-full">
+          <AdminView onNavigate={handleNavigate} />
+        </main>
+      ) : isArulisCaseStudy ? (
         <main className="w-full">
           <ArulisCaseStudy 
             onNavigate={handleNavigate}

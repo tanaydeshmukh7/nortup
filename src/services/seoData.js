@@ -81,6 +81,15 @@ export const SEO_PAGES = {
     category: 'Streetwear Digital Storefront & Lookbook',
     caseStudyDate: '2026-11-01',
   },
+  '/admin': {
+    path: '/admin',
+    canonical: `${BASE_PRODUCTION_URL}/admin`,
+    title: 'Admin Console | Northup Studio',
+    description: 'Internal administrative operations console for Northup Studio project leads.',
+    ogImage: `${BASE_PRODUCTION_URL}/og-image.png`,
+    ogType: 'website',
+    noindex: true,
+  },
 }
 
 /**

@@ -87,6 +87,60 @@ The submission endpoint is located at [`api/contact.js`](./api/contact.js):
 
 ---
 
+## Phase 4: Production Admin Dashboard & Email Automation
+
+Phase 4 delivers an internal operations console (`/admin`), a complete lead lifecycle pipeline, private team notes, and automated transactional emails.
+
+### 1. Database Migration (Lead Pipeline, Notes & Admin Users)
+
+Migration file:
+[`supabase/migrations/20261101_update_leads_pipeline_and_notes.sql`](./supabase/migrations/20261101_update_leads_pipeline_and_notes.sql)
+
+#### Steps to Apply:
+1. Open your [Supabase Dashboard](https://supabase.com/dashboard) > **SQL Editor**.
+2. Click **New Query**.
+3. Copy the entire contents of `supabase/migrations/20261101_update_leads_pipeline_and_notes.sql` and run it.
+4. This migration:
+   - Updates `leads.status` to support the exact pipeline: `new`, `contacted`, `qualified`, `proposal_sent`, `won`, `lost`.
+   - Creates the `lead_notes` table with strict Row Level Security (RLS) and foreign key cascade.
+   - Creates the `admin_users` table with strict RLS and seeds `northup4work@gmail.com`.
+
+### 2. How to Authorize Your Admin Account
+
+Northup Studio enforces **dual-layer server-side authorization** (no frontend-only security checks):
+
+#### Option A: Via Environment Variable (Fastest)
+Add your admin email to `ADMIN_EMAILS` in your Vercel Project Settings (or local `.env`):
+```bash
+ADMIN_EMAILS=northup4work@gmail.com,your-email@domain.com
+```
+
+#### Option B: Via Supabase Admin Users Table
+In your Supabase SQL Editor, run:
+```sql
+insert into public.admin_users (email, role)
+values ('your-email@domain.com', 'admin')
+on conflict (email) do nothing;
+```
+
+#### Creating Your Login User in Supabase Auth:
+1. Go to **Supabase Dashboard** > **Authentication** > **Users**.
+2. Click **Add User** > **Create User**.
+3. Enter your authorized admin email and a secure password.
+4. Navigate to `https://northupstudio.vercel.app/admin` (or `http://localhost:5173/admin` locally).
+5. Log in with your email and password.
+
+### 3. Email Automation (Resend Integration)
+
+When a client submits an enquiry via the website, [`api/contact.js`](./api/contact.js) automatically:
+1. Persists the lead in Supabase before attempting any email delivery.
+2. Escapes all user-submitted content via [`api/_lib/email.js`](./api/_lib/email.js) to prevent HTML/XSS injection in email clients.
+3. **Dispatches Admin Notification** to `CONTACT_NOTIFICATION_EMAIL` with full enquiry details and a direct link to the `/admin` dashboard.
+4. **Dispatches Client Acknowledgement** to the prospective client's email address with editorial branding.
+5. If the email provider is temporarily unavailable or credentials are omitted, the lead remains safely stored in the database without throwing an error to the client.
+
+---
+
 ## Local Development & Build
 
 ### Install Dependencies

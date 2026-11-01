@@ -25,6 +25,11 @@ export default function SEO({ route = '/' }) {
     // 2. Primary Metadata
     setMetaTag('name', 'title', page.title)
     setMetaTag('name', 'description', page.description)
+    if (page.noindex) {
+      setMetaTag('name', 'robots', 'noindex, nofollow')
+    } else {
+      setMetaTag('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
+    }
 
     // 3. Canonical Link
     let canonicalTag = document.querySelector('link[rel="canonical"]')

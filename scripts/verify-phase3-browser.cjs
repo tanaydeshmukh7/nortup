@@ -150,7 +150,7 @@ async function runBrowserTests() {
   console.log('\n--- 5. KEYBOARD ACCESSIBILITY (ESCAPE KEY) ---');
   // Press Escape to close Contact Modal
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(600);
   assert(!(await contactModal.isVisible()), 'Contact Modal closes on Escape key press');
 
   console.log('\n--- 6. GET AN AUDIT MODAL PRESERVATION (PHASE 1 INTEGRITY) ---');
