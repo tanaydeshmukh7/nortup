@@ -71,7 +71,9 @@ Go to **Vercel Dashboard** > **Project Settings** > **Environment Variables**:
 | `SUPABASE_URL` | Production, Preview, Dev | Your Supabase Project URL (`https://<project-ref>.supabase.co`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production, Preview, Dev | Your secret `service_role` key (found in Supabase Settings > API) |
 | `RESEND_API_KEY` | *(Optional)* Production | Resend API key (`re_...`) for real-time email dispatch |
-| `CONTACT_NOTIFICATION_EMAIL` | *(Optional)* Production | Recipient inbox for new enquiries (default: `northup4work@gmail.com`) |
+| `RESEND_TO_EMAIL` | *(Optional)* Production | Primary recipient for admin lead alerts (e.g. `northup4work@gmail.com`) |
+| `CONTACT_NOTIFICATION_EMAIL` | *(Optional)* Production | Fallback recipient inbox for new enquiries |
+| `RESEND_FROM_EMAIL` | *(Optional)* Production | Verified sender address (e.g. `Northup Studio <enquiries@northupstudio.vercel.app>`) |
 
 > **IMPORTANT:** Never prefix `SUPABASE_SERVICE_ROLE_KEY` with `VITE_`. Vercel Serverless Functions have direct access to server-side environment variables, ensuring your service role key is never bundled or transmitted to the browser.
 

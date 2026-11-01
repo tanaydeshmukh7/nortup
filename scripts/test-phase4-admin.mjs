@@ -3,7 +3,7 @@
  * Tests serverless admin endpoints, authorization gates, status pipeline, internal notes, and email escaping.
  */
 
-import { escapeHtml, sendLeadEmails } from '../api/_lib/email.js'
+import { escapeHtml, sendLeadEmails, buildAdminNotificationEmail, buildClientAcknowledgementEmail } from '../api/_lib/email.js'
 import authCheckHandler from '../api/admin/auth-check.js'
 import leadsHandler from '../api/admin/leads.js'
 import notesHandler from '../api/admin/notes.js'
@@ -93,6 +93,86 @@ async function runPhase4Tests() {
     assert(emailRes.reason.includes('RESEND_API_KEY not configured'), 'Provides clear diagnostic reason without crashing')
 
     if (origKey) process.env.RESEND_API_KEY = origKey
+  }
+
+  console.log('\n--- 2B. UPGRADED RESEND AGENCY-BRANDED EMAIL TEMPLATE ---')
+  {
+    const completeLead = {
+      id: 'lead-test-555',
+      created_at: '2026-11-02T01:30:00.000Z',
+      name: 'Julian Vance <script>alert(1)</script>',
+      email: 'julian@vance-holdings.co',
+      company: 'Vance Capital Partners',
+      service: 'Web Development',
+      budget: '$25,000+',
+      timeline: 'Immediately (< 2 weeks)',
+      project_description: 'Next-generation private equity digital monograph.\nRequires custom Three.js visuals.',
+    }
+
+    const { html, text } = buildAdminNotificationEmail({
+      lead: completeLead,
+      siteUrl: 'https://northupstudio.vercel.app',
+    })
+
+    // 1. Header requirements
+    assert(html.includes('NORTHUP STUDIO'), 'Header displays NORTHUP STUDIO clean wordmark')
+    assert(html.includes('NEW PROJECT ENQUIRY'), 'Header contains NEW PROJECT ENQUIRY label')
+    assert(html.includes('#22C55E'), 'Header includes restrained acid-green brand accent detail')
+
+    // 2. Main heading
+    assert(html.includes("You&#039;ve got a new lead.") || html.includes("You've got a new lead."), 'Main heading includes "You\'ve got a new lead."')
+    assert(
+      html.includes('A new enquiry has arrived through your website. Review the details below and follow up with the potential client.'),
+      'Main heading includes supporting text'
+    )
+
+    // 3. Client details & field accuracy
+    assert(html.includes('Julian Vance &lt;script&gt;alert(1)&lt;/script&gt;'), 'Safely renders escaped client name without XSS')
+    assert(html.includes('julian@vance-holdings.co'), 'Includes client email with mailto link')
+    assert(html.includes('Vance Capital Partners'), 'Includes company name when provided')
+    assert(html.includes('Web Development'), 'Includes project/service interest')
+    assert(html.includes('$25,000+'), 'Includes budget when provided')
+    assert(html.includes('Immediately (&lt; 2 weeks)'), 'Includes timeline when provided')
+    assert(html.includes('Next-generation private equity digital monograph.<br />Requires custom Three.js visuals.'), 'Includes full enquiry message with preserved linebreaks')
+
+    // 4. Test field omissions (do not invent missing values)
+    const sparseLead = {
+      id: 'sparse-123',
+      name: 'Maya Lin',
+      email: 'maya@lin.org',
+      service: '',
+      budget: '',
+      timeline: '',
+      company: '',
+      project_description: 'Quick inquiry.',
+    }
+    const { html: sparseHtml, text: sparseText } = buildAdminNotificationEmail({
+      lead: sparseLead,
+      siteUrl: 'https://northupstudio.vercel.app',
+    })
+    assert(!sparseHtml.includes('ESTIMATED BUDGET'), 'Does not render ESTIMATED BUDGET when missing (no invented values)')
+    assert(!sparseHtml.includes('DESIRED TIMELINE'), 'Does not render DESIRED TIMELINE when missing (no invented values)')
+    assert(!sparseHtml.includes('COMPANY / BRAND'), 'Does not render COMPANY when missing')
+    assert(!sparseText.includes('Estimated Budget:'), 'Plain text omits missing budget')
+
+    // 5. Primary action button
+    assert(html.includes('View Lead in Dashboard &rarr;'), 'Prominent "View Lead in Dashboard" button is present')
+    assert(html.includes('https://northupstudio.vercel.app/admin'), 'Links directly to real /admin route')
+    assert(!html.includes('token='), 'Never exposes private tokens or secrets in dashboard URL')
+
+    // 6. Footer requirements
+    assert(html.includes('Thoughtful design. Digital experiences. Meaningful growth.'), 'Footer contains studio tagline')
+    assert(html.includes('https://northupstudio.vercel.app/'), 'Footer includes website link')
+    assert(
+      html.includes('Automated notification &middot; Please do not forward confidential enquiry details') ||
+      html.includes('Automated notification · Please do not forward confidential enquiry details'),
+      'Footer contains confidentiality notice'
+    )
+
+    // 7. Plain-text fallback & inbox preview
+    assert(text.includes('NORTHUP STUDIO — NEW PROJECT ENQUIRY'), 'Plain text fallback contains clear header')
+    assert(text.includes('View Lead in Dashboard:'), 'Plain text fallback contains dashboard link')
+    assert(html.includes('display: none; max-height: 0px;'), 'HTML includes inbox preheader text')
   }
 
   console.log('\n--- 3. UNAUTHENTICATED REQUESTS DENIED (401) ---')
