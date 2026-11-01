@@ -7,6 +7,7 @@ import {
   Search,
   Filter,
   ArrowUpDown,
+  ArrowUpRight,
   Calendar,
   Mail,
   User,
@@ -858,11 +859,11 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
               <Globe className="w-4 h-4" />
               <span>Audit Requests</span>
             </div>
-            {auditMetrics.new > 0 ? (
+            {auditMetrics?.new > 0 ? (
               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF8A3D] text-black">
                 {auditMetrics.new}
               </span>
-            ) : auditMetrics.total > 0 ? (
+            ) : auditMetrics?.total > 0 ? (
               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#1D1D1D] border border-[#303030] text-[#A6A09A]">
                 {auditMetrics.total}
               </span>

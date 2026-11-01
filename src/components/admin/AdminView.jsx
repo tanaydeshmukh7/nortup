@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../../services/supabaseClient'
 import { verifyAdminStatus } from '../../services/adminService'
 import AdminLogin from './AdminLogin'
 import AdminDashboard from './AdminDashboard'
+import ErrorBoundary from './ErrorBoundary'
 
 export default function AdminView({ onNavigate }) {
   const [authState, setAuthState] = useState('checking') // 'checking' | 'unauthenticated' | 'unauthorized' | 'authorized'
@@ -167,10 +168,12 @@ export default function AdminView({ onNavigate }) {
 
   // 4. Authorized State (Show Dashboard)
   return (
-    <AdminDashboard
-      adminUser={adminUser}
-      onLogout={handleLogout}
-      onNavigate={onNavigate}
-    />
+    <ErrorBoundary title="Northup Studio Admin Console" onReset={checkAuth}>
+      <AdminDashboard
+        adminUser={adminUser}
+        onLogout={handleLogout}
+        onNavigate={onNavigate}
+      />
+    </ErrorBoundary>
   )
 }
