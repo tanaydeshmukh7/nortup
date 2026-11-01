@@ -9,6 +9,7 @@ import CTASection from './components/CTASection'
 import Footer from './components/Footer'
 import ContactModal from './components/ContactModal'
 import AuditModal from './components/AuditModal'
+import PrivacyModal from './components/PrivacyModal'
 import CustomCursor from './components/CustomCursor'
 import SEO from './components/SEO'
 import ArulisCaseStudy from './pages/ArulisCaseStudy'
@@ -20,6 +21,7 @@ import DropCultCaseStudy from './pages/DropCultCaseStudy'
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
   const [auditModalOpen, setAuditModalOpen] = useState(false)
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false)
   const [contactSubject, setContactSubject] = useState('Project Inquiry')
   const [currentRoute, setCurrentRoute] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -130,12 +132,12 @@ export default function App() {
   // Pause Lenis when modal is open to prevent background scrolling
   useEffect(() => {
     if (!lenisRef.current) return
-    if (contactModalOpen || auditModalOpen) {
+    if (contactModalOpen || auditModalOpen || privacyModalOpen) {
       lenisRef.current.stop()
     } else {
       lenisRef.current.start()
     }
-  }, [contactModalOpen, auditModalOpen])
+  }, [contactModalOpen, auditModalOpen, privacyModalOpen])
 
   // Central Navigation Handler
   const handleNavigate = (to) => {
@@ -282,7 +284,10 @@ export default function App() {
           </main>
 
           {/* Homepage Footer */}
-          <Footer onOpenContact={handleOpenContact} />
+          <Footer 
+            onOpenContact={handleOpenContact} 
+            onOpenPrivacy={() => setPrivacyModalOpen(true)}
+          />
         </>
       )}
 
@@ -291,12 +296,19 @@ export default function App() {
         isOpen={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         initialSubject={contactSubject}
+        onOpenPrivacy={() => setPrivacyModalOpen(true)}
       />
 
       {/* Production Audit Request Modal */}
       <AuditModal 
         isOpen={auditModalOpen}
         onClose={() => setAuditModalOpen(false)}
+      />
+
+      {/* Production Privacy Policy Modal */}
+      <PrivacyModal
+        isOpen={privacyModalOpen}
+        onClose={() => setPrivacyModalOpen(false)}
       />
     </div>
   )

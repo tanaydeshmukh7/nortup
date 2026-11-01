@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, ArrowUp, Sparkles } from 'lucide-react'
 import FooterCompass from './FooterCompass'
 
-export default function Footer({ onOpenContact }) {
+export default function Footer({ onOpenContact, onOpenPrivacy }) {
   const footerContainerRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
   const currentYear = new Date().getFullYear()
@@ -207,6 +207,12 @@ export default function Footer({ onOpenContact }) {
                 <li key={idx}>
                   <a 
                     href={item.href} 
+                    onClick={(e) => {
+                      if (item.name === 'Privacy Policy' && onOpenPrivacy) {
+                        e.preventDefault()
+                        onOpenPrivacy()
+                      }
+                    }}
                     data-cursor="hover" 
                     className="group inline-flex items-center gap-1.5 font-mono text-[13px] sm:text-[14px] text-white/70 hover:text-white transition-all duration-200"
                   >
