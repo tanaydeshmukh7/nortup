@@ -35,6 +35,13 @@ export default function CustomCursor() {
       const theme = themeElement ? themeElement.getAttribute('data-cursor-theme') : 'default'
       setCursorTheme(theme)
 
+      // Yield to FeaturedWorkCursor when hovering over project cards
+      if (e.target.closest('[data-featured-card]')) {
+        setCursorVariant('hidden')
+        setCursorText('')
+        return
+      }
+
       // Detect cursor targets
       const target = e.target.closest('[data-cursor], button, a, [role="button"]')
       if (target) {

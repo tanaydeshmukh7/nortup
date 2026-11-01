@@ -13,6 +13,7 @@ import ArulisCaseStudy from './pages/ArulisCaseStudy'
 import AtelierCaseStudy from './pages/AtelierCaseStudy'
 import MaisonCaseStudy from './pages/MaisonCaseStudy'
 import AurexCaseStudy from './pages/AurexCaseStudy'
+import DropCultCaseStudy from './pages/DropCultCaseStudy'
 
 export default function App() {
   const [contactModalOpen, setContactModalOpen] = useState(false)
@@ -25,10 +26,12 @@ export default function App() {
       if (path === '/work/atelier-estates') return path
       if (path === '/work/maison-de-sucre') return path
       if (path === '/work/aurex-performance-club') return path
+      if (path === '/work/drop-cult') return path
       if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
       if (window.location.hash.includes('work/atelier-estates')) return '/work/atelier-estates'
       if (window.location.hash.includes('work/maison-de-sucre')) return '/work/maison-de-sucre'
       if (window.location.hash.includes('work/aurex-performance-club')) return '/work/aurex-performance-club'
+      if (window.location.hash.includes('work/drop-cult')) return '/work/drop-cult'
       return path
     }
     return '/'
@@ -186,6 +189,10 @@ export default function App() {
     currentRoute === '/work/aurex-performance-club' || 
     currentRoute.startsWith('/work/aurex-performance-club')
 
+  const isDropCultCaseStudy = 
+    currentRoute === '/work/drop-cult' || 
+    currentRoute.startsWith('/work/drop-cult')
+
   return (
     <div className="relative min-h-screen bg-white text-black selection:bg-[#FF4D0A] selection:text-white">
       {/* Desktop Custom Cursor */}
@@ -223,6 +230,13 @@ export default function App() {
       ) : isAurexCaseStudy ? (
         <main className="w-full">
           <AurexCaseStudy 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+          />
+        </main>
+      ) : isDropCultCaseStudy ? (
+        <main className="w-full">
+          <DropCultCaseStudy 
             onNavigate={handleNavigate}
             onOpenContact={handleOpenContact}
           />

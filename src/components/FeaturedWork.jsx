@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUpRight, ArrowDown, Sparkles } from 'lucide-react'
 import PosterModal from './PosterModal'
+import FeaturedWorkCursor from './FeaturedWorkCursor'
 
 export default function FeaturedWork({ onOpenContact, onNavigate }) {
+  const sectionRef = useRef(null)
   const [posterModalOpen, setPosterModalOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState('ALL')
   const [hoveredId, setHoveredId] = useState(null)
@@ -26,7 +28,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'Atelier Estates Digital Experience',
       type: 'featured-wide', // lg:col-span-8
       inquiry: 'Project Inquiry: Atelier',
-      cursorText: 'CASE STUDY ↗',
+      cursorText: 'VIEW PROJECT ↗',
       route: '/work/atelier-estates',
     },
     {
@@ -39,7 +41,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'Poster Design Collection Overview',
       type: 'featured-tall', // lg:col-span-4
       counter: '01 / 06',
-      cursorText: 'EXPLORE',
+      cursorText: 'VIEW PROJECT ↗',
       isPosterModal: true,
     },
     {
@@ -52,7 +54,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'Aurelis Dental Brand Identity & Platform',
       type: 'full-wide', // full 12 columns
       inquiry: 'Project Inquiry: Aurelis',
-      cursorText: 'CASE STUDY ↗',
+      cursorText: 'VIEW PROJECT ↗',
       route: '/work/arulis-dental-clinic',
     },
     {
@@ -64,19 +66,20 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'Maison de Sucre Artisan Cake Studio Platform',
       type: 'grid-3',
       inquiry: 'Project Inquiry: Maison de Sucre',
-      cursorText: 'CASE STUDY ↗',
+      cursorText: 'VIEW PROJECT ↗',
       route: '/work/maison-de-sucre',
     },
     {
       id: 'drop-cult',
       title: 'Drop Cult',
-      categoryTag: 'Web design & development',
+      categoryTag: 'Streetwear / Digital Experience',
       category: 'WEB',
       image: '/assets/drop-cult.jpg',
-      alt: 'Drop Cult Digital Storefront',
+      alt: 'Drop Cult Digital Storefront & Lookbook',
       type: 'grid-3',
       inquiry: 'Project Inquiry: Drop Cult',
-      cursorText: 'VIEW ↗',
+      cursorText: 'VIEW PROJECT ↗',
+      route: '/work/drop-cult',
     },
     {
       id: 'aurex',
@@ -87,7 +90,7 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
       alt: 'AUREX Performance Club Digital Experience',
       type: 'grid-3',
       inquiry: 'Project Inquiry: AUREX',
-      cursorText: 'CASE STUDY ↗',
+      cursorText: 'VIEW PROJECT ↗',
       route: '/work/aurex-performance-club',
     },
   ]
@@ -112,7 +115,9 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
   }
 
   return (
-    <section id="work" className="relative py-12 sm:py-20 px-2 sm:px-4 lg:px-6 max-w-[1400px] mx-auto scroll-mt-24 select-none">
+    <section id="work" ref={sectionRef} className="relative py-12 sm:py-20 px-2 sm:px-4 lg:px-6 max-w-[1400px] mx-auto scroll-mt-24 select-none">
+      {/* Featured Work Glass Cursor */}
+      <FeaturedWorkCursor containerRef={sectionRef} />
       
       {/* Section Header & Interactive Filter Bar */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-12">
@@ -172,11 +177,20 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 onMouseEnter={() => setHoveredId('atelier')}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => handleCardClick(projects[0])}
-                data-cursor="card"
-                data-cursor-text="CASE STUDY ↗"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleCardClick(projects[0])
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label="View Atelier project"
+                data-featured-card="true"
+                data-cursor-text="VIEW PROJECT ↗"
                 className={`${
                   matchesFilter(projects[1]) ? 'lg:col-span-8' : 'lg:col-span-12'
-                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl ${
+                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/11] lg:aspect-auto lg:h-[632px] shadow-xl ${
                   hoveredId && hoveredId !== 'atelier' ? 'opacity-65 filter brightness-90' : 'opacity-100'
                 }`}
               >
@@ -215,11 +229,20 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                 onMouseEnter={() => setHoveredId('posters')}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={() => handleCardClick(projects[1])}
-                data-cursor="card"
-                data-cursor-text="EXPLORE"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleCardClick(projects[1])
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label="View Poster Design Collection"
+                data-featured-card="true"
+                data-cursor-text="VIEW PROJECT ↗"
                 className={`${
                   matchesFilter(projects[0]) ? 'lg:col-span-4' : 'lg:col-span-12'
-                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[3/4] lg:aspect-auto lg:h-[632px] shadow-xl ${
+                } relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[3/4] lg:aspect-auto lg:h-[632px] shadow-xl ${
                   hoveredId && hoveredId !== 'posters' ? 'opacity-65 filter brightness-90' : 'opacity-100'
                 }`}
               >
@@ -270,9 +293,18 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
             onMouseEnter={() => setHoveredId('aurelis')}
             onMouseLeave={() => setHoveredId(null)}
             onClick={(e) => handleCardClick(projects[2], e)}
-            data-cursor="card"
-            data-cursor-text="CASE STUDY ↗"
-            className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[16/9] lg:aspect-auto lg:h-[632px] shadow-xl ${
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleCardClick(projects[2], e)
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label="View Aurelis project"
+            data-featured-card="true"
+            data-cursor-text="VIEW PROJECT ↗"
+            className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[16/9] lg:aspect-auto lg:h-[632px] shadow-xl ${
               hoveredId && hoveredId !== 'aurelis' ? 'opacity-65 filter brightness-90' : 'opacity-100'
             }`}
           >
@@ -317,9 +349,18 @@ export default function FeaturedWork({ onOpenContact, onNavigate }) {
                   onMouseEnter={() => setHoveredId(card.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   onClick={() => handleCardClick(card)}
-                  data-cursor="card"
-                  data-cursor-text={card.cursorText || "VIEW ↗"}
-                  className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group cursor-pointer aspect-[452/481] shadow-xl ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleCardClick(card)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View ${card.title} project`}
+                  data-featured-card="true"
+                  data-cursor-text="VIEW PROJECT ↗"
+                  className={`relative rounded-3xl overflow-hidden bg-[#15100E] border border-white/[0.1] hover:border-[#FF4D0A]/40 transition-all duration-500 group featured-project-card cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D0A] focus-visible:ring-offset-2 focus-visible:ring-offset-black aspect-[452/481] shadow-xl ${
                     hoveredId && !isHovered ? 'opacity-65 filter brightness-90' : 'opacity-100'
                   }`}
                 >

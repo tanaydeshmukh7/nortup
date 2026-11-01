@@ -83,3 +83,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #FF4D0A;
 }
+
+/* Featured Work Custom Cursor: Hide standard pointer within project cards on fine pointer */
+@media (pointer: fine) and (hover: hover) {
+  .featured-project-card,
+  .featured-project-card * {
+    cursor: none !important;
+  }
+}
+

@@ -26,3 +26,20 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Scratch files & scrapers
+dropcult_*
+capture_*
+audit-*
+extract_*
+fetch_*
+find_*
+parse_*
+scrape_*
+test_browser.cjs
+verify_*.cjs
+*.png
+!bg.png
+!assets/*.png
+!public/**/*.png
+
