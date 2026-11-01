@@ -5,6 +5,7 @@ const VALID_STATUSES = [
   'contacted',
   'qualified',
   'proposal_sent',
+  'negotiation',
   'won',
   'lost',
 ]
@@ -61,6 +62,7 @@ export default async function handler(req, res) {
         contacted: allLeadsForMetrics.filter((l) => l.status === 'contacted').length,
         qualified: allLeadsForMetrics.filter((l) => l.status === 'qualified').length,
         proposal_sent: allLeadsForMetrics.filter((l) => l.status === 'proposal_sent').length,
+        negotiation: allLeadsForMetrics.filter((l) => l.status === 'negotiation').length,
         won: allLeadsForMetrics.filter((l) => l.status === 'won' || l.status === 'closed_won').length,
         lost: allLeadsForMetrics.filter((l) => l.status === 'lost' || l.status === 'closed_lost').length,
       }
@@ -133,48 +135,71 @@ export default async function handler(req, res) {
     }
   }
 
-  // 3. PATCH: Update lead status
+  // 3. PATCH: Update lead status & CRM attributes
   if (req.method === 'PATCH') {
     try {
       const body = req.body || {}
-      const { leadId, status } = body
+      const {
+        leadId,
+        status,
+        phone,
+        next_follow_up_date,
+        follow_up_completed,
+        converted_at,
+        converted_client_id,
+      } = body
 
       if (!leadId) {
         return res.status(400).json({ success: false, error: 'Missing required leadId parameter.' })
       }
 
-      if (!status || !VALID_STATUSES.includes(status)) {
-        return res.status(400).json({
-          success: false,
-          error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}.`,
-        })
+      const updateData = {}
+
+      if (status !== undefined) {
+        if (!VALID_STATUSES.includes(status)) {
+          return res.status(400).json({
+            success: false,
+            error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}.`,
+          })
+        }
+        updateData.status = status
+      }
+
+      if (phone !== undefined) updateData.phone = phone ? String(phone).trim() : null
+      if (next_follow_up_date !== undefined) updateData.next_follow_up_date = next_follow_up_date
+      if (follow_up_completed !== undefined) updateData.follow_up_completed = Boolean(follow_up_completed)
+      if (converted_at !== undefined) updateData.converted_at = converted_at
+      if (converted_client_id !== undefined) updateData.converted_client_id = converted_client_id
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ success: false, error: 'No update parameters provided.' })
       }
 
       const { data, error } = await supabase
         .from('leads')
-        .update({ status })
+        .update(updateData)
         .eq('id', leadId)
         .select()
         .single()
 
       if (error) {
-        console.error('[leads.js] Error updating lead status:', error.message)
+        console.error('[leads.js] Error updating lead:', error.message)
         return res.status(500).json({
           success: false,
-          error: 'Failed to update lead status in database.',
+          error: 'Failed to update lead record in database.',
         })
       }
 
       return res.status(200).json({
         success: true,
-        message: `Lead status updated to "${status}".`,
+        message: 'Lead updated successfully.',
         lead: data,
       })
     } catch (err) {
       console.error('[leads.js] Exception in PATCH handler:', err.message)
       return res.status(500).json({
         success: false,
-        error: 'An internal server error occurred while updating status.',
+        error: 'An internal server error occurred while updating lead.',
       })
     }
   }

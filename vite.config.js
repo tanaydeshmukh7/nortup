@@ -21,17 +21,25 @@ function vercelApiDevPlugin() {
 
         try {
           const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost:5173'}`)
-          const pathname = parsedUrl.pathname
+          const pathname = parsedUrl.pathname.replace(/\/+$/, '')
 
           let handlerModule = null
-          if (pathname === '/api/contact') {
+          if (pathname === '/api/contact' || pathname === '/api/contact.js') {
             handlerModule = await import('./api/contact.js')
-          } else if (pathname === '/api/admin/auth-check') {
+          } else if (pathname === '/api/admin/auth-check' || pathname === '/api/admin/auth-check.js') {
             handlerModule = await import('./api/admin/auth-check.js')
-          } else if (pathname === '/api/admin/leads') {
+          } else if (pathname === '/api/admin/leads' || pathname === '/api/admin/leads.js') {
             handlerModule = await import('./api/admin/leads.js')
-          } else if (pathname === '/api/admin/notes') {
+          } else if (pathname === '/api/admin/notes' || pathname === '/api/admin/notes.js') {
             handlerModule = await import('./api/admin/notes.js')
+          } else if (pathname === '/api/admin/communication' || pathname === '/api/admin/communication.js') {
+            handlerModule = await import('./api/admin/communication.js')
+          } else if (pathname === '/api/admin/proposals' || pathname === '/api/admin/proposals.js') {
+            handlerModule = await import('./api/admin/proposals.js')
+          } else if (pathname === '/api/admin/templates' || pathname === '/api/admin/templates.js') {
+            handlerModule = await import('./api/admin/templates.js')
+          } else if (pathname === '/api/admin/schedule-meeting' || pathname === '/api/admin/schedule-meeting.js') {
+            handlerModule = await import('./api/admin/schedule-meeting.js')
           } else {
             return next()
           }

@@ -41,22 +41,47 @@ import {
   Eye,
   SlidersHorizontal,
   ChevronDown,
+  Phone,
+  MessageSquare,
+  Video,
+  FileCheck,
+  UserCheck,
+  CreditCard,
+  HelpCircle,
+  FileSignature,
+  ArrowRight,
+  SendHorizontal,
+  Smartphone,
+  Globe,
+  Radio,
+  Zap,
 } from 'lucide-react'
 import {
   getAdminLeads,
   updateLeadStatus,
+  updateLeadCRM,
   getLeadNotes,
   addLeadNote,
   deleteLeadNote,
+  getCommunicationLogs,
+  sendCommunication,
+  getProposals,
+  createProposal,
+  updateProposal,
+  getMessageTemplates,
+  updateMessageTemplate,
+  scheduleDiscoveryMeeting,
 } from '../../services/adminService'
+import { STARTER_TEMPLATES, interpolateTemplate } from '../../services/templateData'
 
-// Pipeline stages with accessible color tokens
+// Pipeline stages with Northup Studio Orange & Charcoal color tokens
 const PIPELINE_STATUSES = [
-  { key: 'all', label: 'All Enquiries', badgeColor: 'text-[#F5F5F0] bg-[#1C1C1C] border-[#2B2B2B]' },
-  { key: 'new', label: 'New', badgeColor: 'text-[#C6FF00] bg-[#C6FF00]/10 border-[#C6FF00]/30' },
+  { key: 'all', label: 'All Enquiries', badgeColor: 'text-[#F5F1EB] bg-[#1D1D1D] border-[#303030]' },
+  { key: 'new', label: 'New', badgeColor: 'text-[#FF8A3D] bg-[#FF8A3D]/10 border-[#FF8A3D]/30' },
   { key: 'contacted', label: 'Contacted', badgeColor: 'text-sky-400 bg-sky-500/10 border-sky-500/30' },
   { key: 'qualified', label: 'Qualified', badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
   { key: 'proposal_sent', label: 'Proposal Sent', badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+  { key: 'negotiation', label: 'Negotiation', badgeColor: 'text-[#E96D24] bg-[#E96D24]/10 border-[#E96D24]/30' },
   { key: 'won', label: 'Won', badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
   { key: 'lost', label: 'Lost', badgeColor: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/30' },
 ]
@@ -70,7 +95,7 @@ const SERVICES_LIST = [
   'Other',
 ]
 
-// Studio Case Studies showcase for Projects tab
+// Studio Production Case Studies
 const STUDIO_PROJECTS = [
   {
     title: 'Atelier Estates',
@@ -83,7 +108,7 @@ const STUDIO_PROJECTS = [
     title: 'Aurelis Dental Clinic',
     category: 'Brand Identity & Web Experience',
     route: '/work/arulis-dental-clinic',
-    description: 'Bespoke patient consultation portal with custom dental procedure monograph.',
+    description: 'Bespoke patient consultation portal with custom procedure monograph.',
     tag: 'Case Study',
   },
   {
@@ -111,7 +136,7 @@ const STUDIO_PROJECTS = [
 
 export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   // Navigation State
-  const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'leads' | 'followups' | 'projects' | 'settings'
+  const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'leads' | 'clients' | 'proposals' | 'projects' | 'tasks' | 'templates' | 'settings'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
 
@@ -123,6 +148,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     contacted: 0,
     qualified: 0,
     proposal_sent: 0,
+    negotiation: 0,
     won: 0,
     lost: 0,
   })
@@ -146,13 +172,71 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const [actionSuccessMessage, setActionSuccessMessage] = useState(null)
   const [copiedEmail, setCopiedEmail] = useState(null)
 
-  // Lead Detail Drawer & Internal Notes
+  // Selected Lead & Drawer
   const [selectedLead, setSelectedLead] = useState(null)
   const [notes, setNotes] = useState([])
+  const [commLogs, setCommLogs] = useState([])
+  const [leadProposals, setLeadProposals] = useState([])
   const [isLoadingNotes, setIsLoadingNotes] = useState(false)
+  const [isLoadingComm, setIsLoadingComm] = useState(false)
   const [newNote, setNewNote] = useState('')
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [updatingStatusId, setUpdatingStatusId] = useState(null)
+
+  // Follow-up Date Editing
+  const [editingFollowUp, setEditingFollowUp] = useState(false)
+  const [followUpInput, setFollowUpInput] = useState('')
+
+  // Communication Action Modal State
+  const [commModalOpen, setCommModalOpen] = useState(false)
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('initial_acknowledgement')
+  const [commChannel, setCommChannel] = useState('email') // 'email' | 'whatsapp' | 'both'
+  const [commSubject, setCommSubject] = useState('')
+  const [commContent, setCommContent] = useState('')
+  const [commRecipientEmail, setCommRecipientEmail] = useState('')
+  const [commRecipientPhone, setCommRecipientPhone] = useState('')
+  const [isSendingComm, setIsSendingComm] = useState(false)
+  const [commSendResult, setCommSendResult] = useState(null)
+
+  // Proposal Creation Modal State
+  const [proposalModalOpen, setProposalModalOpen] = useState(false)
+  const [proposalTitle, setProposalTitle] = useState('')
+  const [proposalOverview, setProposalOverview] = useState('')
+  const [proposalDeliverables, setProposalDeliverables] = useState([
+    'Custom High-Performance Architecture',
+    'Interactive Three.js Visual Monograph',
+    'Technical SEO & Structured Schema Data',
+    'CMS Integration & Admin Operations Console',
+  ])
+  const [proposalMilestones, setProposalMilestones] = useState([
+    { name: 'Architecture & Design Prototyping', timeline: 'Week 1–2' },
+    { name: 'Core Engineering & Motion Development', timeline: 'Week 3–4' },
+    { name: 'Production QA, SEO Pre-rendering & Deployment', timeline: 'Week 5' },
+  ])
+  const [proposalLineItems, setProposalLineItems] = useState([
+    { description: 'Design Direction & UX Prototyping', amount: 3500 },
+    { description: 'Custom Full-Stack Engineering & WebGL', amount: 6500 },
+    { description: 'Technical SEO & Performance Optimization', amount: 1500 },
+  ])
+  const [proposalCurrency, setProposalCurrency] = useState('USD')
+  const [proposalTerms, setProposalTerms] = useState('50% upon commencement, 50% upon production deployment.')
+  const [isCreatingProposal, setIsCreatingProposal] = useState(false)
+  const [selectedProposalToView, setSelectedProposalToView] = useState(null)
+
+  // Discovery Meeting Scheduler Modal
+  const [meetingModalOpen, setMeetingModalOpen] = useState(false)
+  const [meetingDate, setMeetingDate] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 10))
+  const [meetingTime, setMeetingTime] = useState('14:00')
+  const [meetingDuration, setMeetingDuration] = useState(30)
+  const [meetingTimezone, setMeetingTimezone] = useState('UTC')
+  const [manualMeetLink, setManualMeetLink] = useState('https://meet.google.com/new')
+  const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
+
+  // Template Center State
+  const [templatesList, setTemplatesList] = useState(STARTER_TEMPLATES)
+  const [editingTemplateKey, setEditingTemplateKey] = useState(null)
+  const [editingTemplateData, setEditingTemplateData] = useState(null)
+  const [templateTesterLead, setTemplateTesterLead] = useState(null)
 
   // Fetch leads from serverless API
   const loadLeads = useCallback(
@@ -185,6 +269,15 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     loadLeads(1)
   }, [selectedStatus, selectedService, sortOrder])
 
+  // Load Templates
+  useEffect(() => {
+    getMessageTemplates()
+      .then((data) => {
+        if (data && data.length) setTemplatesList(data)
+      })
+      .catch((err) => console.warn('Using starter templates:', err.message))
+  }, [])
+
   // Handle Search submit
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -195,6 +288,20 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   const handleRefresh = () => {
     setIsRefreshing(true)
     loadLeads(pagination.page)
+  }
+
+  // Show Toast
+  const showNotification = (msg) => {
+    setActionSuccessMessage(msg)
+    setTimeout(() => setActionSuccessMessage(null), 3500)
+  }
+
+  // Copy helper
+  const copyToClipboard = (text, label = 'Copied to clipboard') => {
+    navigator.clipboard.writeText(text)
+    setCopiedEmail(text)
+    showNotification(label)
+    setTimeout(() => setCopiedEmail(null), 2000)
   }
 
   // Handle Lead Status Change
@@ -208,7 +315,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
         setSelectedLead((prev) => ({ ...prev, status: newStatus }))
       }
       loadLeads(pagination.page)
-      showNotification(`Status updated to "${newStatus}"`)
+      showNotification(`Pipeline stage updated to "${newStatus.replace('_', ' ').toUpperCase()}"`)
     } catch (err) {
       alert(`Could not update status: ${err.message}`)
     } finally {
@@ -216,18 +323,83 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     }
   }
 
-  // Open Lead Detail Drawer & fetch notes
+  // Convert Won Lead to Client
+  const handleConvertLeadToClient = async (lead) => {
+    if (!confirm(`Confirm converting ${lead.name} to an active Client Engagement? This records project commencement.`)) {
+      return
+    }
+
+    try {
+      const updated = await updateLeadCRM(lead.id, {
+        status: 'won',
+        converted_at: new Date().toISOString(),
+        converted_client_id: `CL-${Date.now().toString().slice(-4)}`,
+      })
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, ...updated } : l)))
+      if (selectedLead?.id === lead.id) {
+        setSelectedLead((prev) => ({ ...prev, ...updated }))
+      }
+      showNotification(`Client converted successfully (${updated.converted_client_id || 'Active'}).`)
+      loadLeads(pagination.page)
+    } catch (err) {
+      alert(`Conversion error: ${err.message}`)
+    }
+  }
+
+  // Open Lead Detail Drawer & fetch notes + comms + proposals
   const openLeadDetail = async (lead) => {
     setSelectedLead(lead)
+    setFollowUpInput(lead.next_follow_up_date ? lead.next_follow_up_date.slice(0, 10) : '')
+    setEditingFollowUp(false)
     setIsLoadingNotes(true)
+    setIsLoadingComm(true)
     setNotes([])
+    setCommLogs([])
+    setLeadProposals([])
+
     try {
-      const leadNotes = await getLeadNotes(lead.id)
+      const [leadNotes, commHistory, proposals] = await Promise.all([
+        getLeadNotes(lead.id).catch(() => []),
+        getCommunicationLogs(lead.id).catch(() => []),
+        getProposals(lead.id).catch(() => []),
+      ])
       setNotes(leadNotes)
-    } catch (err) {
-      console.warn('Could not load notes:', err.message)
+      setCommLogs(commHistory)
+      setLeadProposals(proposals)
     } finally {
       setIsLoadingNotes(false)
+      setIsLoadingComm(false)
+    }
+  }
+
+  // Save Follow-up Date
+  const handleSaveFollowUpDate = async () => {
+    if (!selectedLead) return
+    try {
+      const updated = await updateLeadCRM(selectedLead.id, {
+        next_follow_up_date: followUpInput ? new Date(followUpInput).toISOString() : null,
+        follow_up_completed: false,
+      })
+      setSelectedLead((prev) => ({ ...prev, ...updated }))
+      setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? { ...l, ...updated } : l)))
+      setEditingFollowUp(false)
+      showNotification('Follow-up scheduled.')
+    } catch (err) {
+      alert(`Error updating follow-up: ${err.message}`)
+    }
+  }
+
+  // Toggle Follow-up Completed
+  const handleToggleFollowUpCompleted = async () => {
+    if (!selectedLead) return
+    const newState = !selectedLead.follow_up_completed
+    try {
+      const updated = await updateLeadCRM(selectedLead.id, { follow_up_completed: newState })
+      setSelectedLead((prev) => ({ ...prev, ...updated }))
+      setLeads((prev) => prev.map((l) => (l.id === selectedLead.id ? { ...l, ...updated } : l)))
+      showNotification(newState ? 'Follow-up marked complete' : 'Follow-up reopened')
+    } catch (err) {
+      alert(`Error updating follow-up: ${err.message}`)
     }
   }
 
@@ -241,7 +413,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       const createdNote = await addLeadNote(selectedLead.id, newNote.trim())
       setNotes((prev) => [createdNote, ...prev])
       setNewNote('')
-      showNotification('Internal note saved successfully.')
+      showNotification('Internal note saved.')
     } catch (err) {
       alert(`Error saving note: ${err.message}`)
     } finally {
@@ -261,16 +433,154 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     }
   }
 
-  const showNotification = (msg) => {
-    setActionSuccessMessage(msg)
-    setTimeout(() => setActionSuccessMessage(null), 3000)
+  // Prepare & Open Communication Modal
+  const openCommunicationModal = (templateKeyToUse = 'initial_acknowledgement') => {
+    if (!selectedLead) return
+    const tpl = templatesList.find((t) => t.key === templateKeyToUse) || templatesList[0]
+    setSelectedTemplateKey(tpl.key)
+    setCommRecipientEmail(selectedLead.email || '')
+    setCommRecipientPhone(selectedLead.phone || '')
+    setCommSendResult(null)
+
+    // Interpolate with actual lead data
+    const vars = {
+      client_name: selectedLead.name,
+      service_name: selectedLead.service || 'Web Platform',
+      project_name: selectedLead.company ? `${selectedLead.company} Web Platform` : `${selectedLead.name} Digital Platform`,
+      next_step: 'Schedule a discovery session',
+    }
+
+    const { text: subjectText } = interpolateTemplate(tpl.subject || 'Message from Northup Studio', vars)
+    const { text: bodyText } = interpolateTemplate(commChannel === 'whatsapp' ? tpl.body_whatsapp : tpl.body_email, vars)
+
+    setCommSubject(subjectText)
+    setCommContent(bodyText)
+    setCommModalOpen(true)
   }
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
-    setCopiedEmail(text)
-    showNotification('Email copied to clipboard')
-    setTimeout(() => setCopiedEmail(null), 2000)
+  // Switch template inside modal
+  const handleTemplateSelectionChange = (newKey) => {
+    setSelectedTemplateKey(newKey)
+    if (!selectedLead) return
+    const tpl = templatesList.find((t) => t.key === newKey) || templatesList[0]
+
+    const vars = {
+      client_name: selectedLead.name,
+      service_name: selectedLead.service || 'Web Platform',
+      project_name: selectedLead.company ? `${selectedLead.company} Web Platform` : `${selectedLead.name} Digital Platform`,
+      next_step: 'Schedule a discovery session',
+    }
+
+    const { text: subjectText } = interpolateTemplate(tpl.subject || 'Message from Northup Studio', vars)
+    const { text: bodyText } = interpolateTemplate(commChannel === 'whatsapp' ? tpl.body_whatsapp : tpl.body_email, vars)
+
+    setCommSubject(subjectText)
+    setCommContent(bodyText)
+  }
+
+  // Dispatch Communication (Email / WhatsApp)
+  const handleSendCommunication = async () => {
+    if (!selectedLead || !commContent.trim()) return
+    setIsSendingComm(true)
+    setCommSendResult(null)
+
+    try {
+      const res = await sendCommunication({
+        leadId: selectedLead.id,
+        channel: commChannel,
+        recipient: commRecipientEmail,
+        recipientPhone: commRecipientPhone,
+        subject: commSubject,
+        content: commContent.trim(),
+        templateKey: selectedTemplateKey,
+      })
+
+      setCommSendResult(res)
+      if (res.log) {
+        setCommLogs((prev) => [res.log, ...prev])
+      }
+
+      if (res.success) {
+        showNotification(commChannel === 'whatsapp' && res.status === 'manual_opened' ? 'Opening WhatsApp draft...' : 'Communication dispatched.')
+        if (res.waLink && commChannel === 'whatsapp') {
+          window.open(res.waLink, '_blank', 'noopener,noreferrer')
+        }
+      }
+    } catch (err) {
+      alert(`Communication error: ${err.message}`)
+    } finally {
+      setIsSendingComm(false)
+    }
+  }
+
+  // Schedule Discovery Meeting
+  const handleScheduleMeetingSubmit = async (e) => {
+    e.preventDefault()
+    if (!selectedLead) return
+    setIsSchedulingMeeting(true)
+
+    try {
+      const res = await scheduleDiscoveryMeeting({
+        leadId: selectedLead.id,
+        clientName: selectedLead.name,
+        clientEmail: selectedLead.email,
+        meetingDate,
+        meetingTime,
+        durationMinutes: meetingDuration,
+        timezone: meetingTimezone,
+        manualMeetingLink: manualMeetLink,
+        agenda: `Review requirements for ${selectedLead.service || 'Web Platform'}.`,
+      })
+
+      showNotification('Consultation scheduled & logged.')
+      setMeetingModalOpen(false)
+
+      // Refresh communication history
+      const updatedLogs = await getCommunicationLogs(selectedLead.id)
+      setCommLogs(updatedLogs)
+      loadLeads(pagination.page)
+    } catch (err) {
+      alert(`Scheduling error: ${err.message}`)
+    } finally {
+      setIsSchedulingMeeting(false)
+    }
+  }
+
+  // Create Proposal
+  const handleCreateProposalSubmit = async (e) => {
+    e.preventDefault()
+    if (!selectedLead || !proposalTitle.trim()) return
+    setIsCreatingProposal(true)
+
+    const subtotal = proposalLineItems.reduce((acc, item) => acc + (Number(item.amount) || 0), 0)
+    const total_amount = subtotal
+
+    try {
+      const created = await createProposal({
+        lead_id: selectedLead.id,
+        title: proposalTitle.trim(),
+        client_name: selectedLead.name,
+        client_email: selectedLead.email,
+        client_company: selectedLead.company,
+        project_overview: proposalOverview.trim(),
+        deliverables: proposalDeliverables,
+        milestones: proposalMilestones,
+        line_items: proposalLineItems,
+        currency: proposalCurrency,
+        subtotal,
+        total_amount,
+        payment_terms: proposalTerms,
+        valid_until: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+      })
+
+      setLeadProposals((prev) => [created, ...prev])
+      showNotification(`Proposal ${created.proposal_number} drafted.`)
+      setProposalModalOpen(false)
+    } catch (err) {
+      alert(`Proposal error: ${err.message}`)
+    } finally {
+      setIsCreatingProposal(false)
+    }
   }
 
   // Export current filtered leads to CSV
@@ -280,17 +590,19 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       return
     }
 
-    const headers = ['ID', 'Date', 'Name', 'Email', 'Company', 'Service', 'Budget', 'Timeline', 'Status', 'Description']
+    const headers = ['ID', 'Date', 'Name', 'Email', 'Phone', 'Company', 'Service', 'Budget', 'Timeline', 'Status', 'FollowUpDate', 'Description']
     const rows = leads.map((l) => [
       `"${l.id}"`,
       `"${l.created_at || ''}"`,
       `"${(l.name || '').replace(/"/g, '""')}"`,
       `"${(l.email || '').replace(/"/g, '""')}"`,
+      `"${(l.phone || '').replace(/"/g, '""')}"`,
       `"${(l.company || '').replace(/"/g, '""')}"`,
       `"${(l.service || '').replace(/"/g, '""')}"`,
       `"${(l.budget || '').replace(/"/g, '""')}"`,
       `"${(l.timeline || '').replace(/"/g, '""')}"`,
       `"${l.status}"`,
+      `"${l.next_follow_up_date || ''}"`,
       `"${(l.project_description || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
     ])
 
@@ -298,27 +610,11 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `northup_leads_${new Date().toISOString().slice(0, 10)}.csv`)
+    link.setAttribute('download', `northup_crm_leads_${new Date().toISOString().slice(0, 10)}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     showNotification('CSV export downloaded.')
-  }
-
-  // Helper for status badge
-  const getStatusBadge = (status) => {
-    const s = PIPELINE_STATUSES.find((item) => item.key === status) || {
-      label: status,
-      badgeColor: 'text-[#F5F5F0] bg-[#1C1C1C] border-[#2B2B2B]',
-    }
-    return (
-      <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium border uppercase tracking-wider ${s.badgeColor}`}
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90" />
-        {s.label}
-      </span>
-    )
   }
 
   // Format date cleanly
@@ -336,12 +632,31 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
     }
   }
 
-  // Filter leads that require follow-up
+  // Helper for status badge
+  const getStatusBadge = (status) => {
+    const s = PIPELINE_STATUSES.find((item) => item.key === status) || {
+      label: status,
+      badgeColor: 'text-[#F5F1EB] bg-[#1D1D1D] border-[#303030]',
+    }
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium border uppercase tracking-wider ${s.badgeColor}`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90" />
+        {s.label}
+      </span>
+    )
+  }
+
+  // Derived Lead Collections
   const followUpLeads = useMemo(() => {
-    return leads.filter((l) => l.status === 'new' || l.status === 'contacted')
+    return leads.filter((l) => (l.status === 'new' || l.status === 'contacted' || l.next_follow_up_date) && !l.follow_up_completed)
   }, [leads])
 
-  // Conversion rate metric
+  const wonClients = useMemo(() => {
+    return leads.filter((l) => l.status === 'won' || l.converted_at)
+  }, [leads])
+
   const winRate = useMemo(() => {
     const closed = (metrics.won || 0) + (metrics.lost || 0)
     if (closed === 0) return 0
@@ -349,42 +664,42 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
   }, [metrics.won, metrics.lost])
 
   return (
-    <div className="h-screen w-full bg-[#0B0B0B] text-[#F5F5F0] flex overflow-hidden font-sans select-none antialiased">
+    <div className="h-screen w-full bg-[#0C0C0C] text-[#F5F1EB] flex overflow-hidden font-sans select-none antialiased">
       {/* =========================================================================
-          1. SIDEBAR NAVIGATION
+          1. COMPACT GLASS SIDEBAR
          ========================================================================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#141414] border-r border-[#2B2B2B] flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#151515]/95 backdrop-blur-xl border-r border-[#303030] flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="p-6 border-b border-[#2B2B2B] flex items-center justify-between">
+        <div className="p-5 border-b border-[#303030] flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold tracking-wider text-base uppercase text-[#F5F5F0]">
+              <span className="font-bold tracking-wider text-sm uppercase text-[#F5F1EB]">
                 NORTHUP STUDIO
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-widest bg-[#C6FF00]/15 text-[#C6FF00] border border-[#C6FF00]/30">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold tracking-widest bg-[#FF8A3D]/15 text-[#FF8A3D] border border-[#FF8A3D]/30">
                 CRM
               </span>
             </div>
-            <p className="text-[11px] font-mono text-[#A1A1AA] mt-1">
-              Internal Client Console
+            <p className="text-[11px] font-mono text-[#A6A09A] mt-0.5">
+              Client Operations Workspace
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]"
+            className="md:hidden p-1.5 rounded-lg text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto font-mono text-xs">
+        {/* Sidebar Nav Items */}
+        <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto font-mono text-xs">
           {/* Overview */}
           <button
             type="button"
@@ -394,8 +709,8 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === 'overview'
-                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
-                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -413,8 +728,8 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === 'leads'
-                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
-                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -422,37 +737,107 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
               <span>Leads Pipeline</span>
             </div>
             {metrics.new > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#C6FF00] text-black">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF8A3D] text-black">
                 {metrics.new}
               </span>
             )}
           </button>
 
-          {/* Follow-ups / Tasks */}
+          {/* Clients */}
           <button
             type="button"
             onClick={() => {
-              setActiveTab('followups')
+              setActiveTab('clients')
               setMobileMenuOpen(false)
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-              activeTab === 'followups'
-                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
-                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+              activeTab === 'clients'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Users className="w-4 h-4" />
+              <span>Active Clients</span>
+            </div>
+            {wonClients.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#1D1D1D] border border-[#303030] text-[#A6A09A]">
+                {wonClients.length}
+              </span>
+            )}
+          </button>
+
+          {/* Proposals */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('proposals')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'proposals'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <FileSignature className="w-4 h-4" />
+              <span>Proposals Hub</span>
+            </div>
+            {metrics.proposal_sent > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#1D1D1D] border border-[#303030] text-[#A6A09A]">
+                {metrics.proposal_sent}
+              </span>
+            )}
+          </button>
+
+          {/* Follow-up Tasks */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('tasks')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'tasks'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
             }`}
           >
             <div className="flex items-center gap-3">
               <CheckSquare className="w-4 h-4" />
-              <span>Follow-up Queue</span>
+              <span>Tasks &amp; Follow-ups</span>
             </div>
             {followUpLeads.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#1C1C1C] border border-[#2B2B2B] text-[#A1A1AA]">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF8A3D]/20 text-[#FF8A3D]">
                 {followUpLeads.length}
               </span>
             )}
           </button>
 
-          {/* Case Studies / Projects */}
+          {/* Template Center */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('templates')
+              setMobileMenuOpen(false)
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'templates'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <MessageSquare className="w-4 h-4" />
+              <span>Template Center</span>
+            </div>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-[#A6A09A] bg-[#1D1D1D]">
+              14
+            </span>
+          </button>
+
+          {/* Projects */}
           <button
             type="button"
             onClick={() => {
@@ -461,8 +846,8 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === 'projects'
-                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
-                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -480,31 +865,31 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === 'settings'
-                ? 'bg-[#1C1C1C] text-[#C6FF00] font-semibold border-l-2 border-[#C6FF00] shadow-sm'
-                : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#1C1C1C]/60'
+                ? 'bg-[#1D1D1D] text-[#FF8A3D] font-semibold border-l-2 border-[#FF8A3D] shadow-[0_0_15px_rgba(255,138,61,0.12)]'
+                : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]/60'
             }`}
           >
             <div className="flex items-center gap-3">
               <Settings className="w-4 h-4" />
-              <span>System &amp; Admin</span>
+              <span>Integrations</span>
             </div>
           </button>
         </nav>
 
-        {/* Sidebar Footer: Authenticated User & Actions */}
-        <div className="p-4 border-t border-[#2B2B2B] bg-[#0E0E0E] space-y-3 font-mono text-xs">
-          <div className="p-3 rounded-xl bg-[#141414] border border-[#2B2B2B]">
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-[#303030] bg-[#101010] space-y-3 font-mono text-xs">
+          <div className="p-3 rounded-xl bg-[#151515] border border-[#303030]">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#C6FF00]/15 border border-[#C6FF00]/30 flex items-center justify-center text-[#C6FF00] font-bold text-xs flex-shrink-0">
-                {(adminUser?.email || 'A')[0].toUpperCase()}
+              <div className="w-7 h-7 rounded-lg bg-[#FF8A3D]/15 border border-[#FF8A3D]/30 flex items-center justify-center text-[#FF8A3D] font-bold text-xs flex-shrink-0">
+                {(adminUser?.email || 'N')[0].toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[#F5F5F0] font-medium truncate text-[11px]">
+                <p className="text-[#F5F1EB] font-medium truncate text-[11px]">
                   {adminUser?.email || 'admin@northupstudio.com'}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C6FF00]" />
-                  <span className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A3D]" />
+                  <span className="text-[10px] text-[#A6A09A] uppercase tracking-wider">
                     {adminUser?.role || 'SUPERADMIN'}
                   </span>
                 </div>
@@ -516,9 +901,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
             <button
               type="button"
               onClick={() => onNavigate('/')}
-              className="flex-1 py-2 px-3 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-2 px-3 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#A6A09A] hover:text-[#F5F1EB] text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-[#C6FF00]" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#FF8A3D]" />
               <span>Website ↗</span>
             </button>
 
@@ -545,58 +930,63 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       {/* =========================================================================
           2. MAIN CONTENT AREA
          ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0B0B0B]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0C0C0C]">
         {/* Top Header */}
-        <header className="h-16 bg-[#141414] border-b border-[#2B2B2B] px-4 sm:px-8 flex items-center justify-between flex-shrink-0 z-30">
+        <header className="h-16 bg-[#151515]/90 backdrop-blur-md border-b border-[#303030] px-4 sm:px-8 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0]"
+              className="md:hidden p-2 rounded-xl bg-[#1D1D1D] border border-[#303030] text-[#A6A09A] hover:text-[#F5F1EB]"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             <div>
-              <h1 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0] flex items-center gap-2">
+              <h1 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB] flex items-center gap-2">
                 {activeTab === 'overview' && 'AGENCY OVERVIEW'}
                 {activeTab === 'leads' && 'LEAD MANAGEMENT & PIPELINE'}
-                {activeTab === 'followups' && 'FOLLOW-UP QUEUE'}
+                {activeTab === 'clients' && 'CLIENT OPERATIONS'}
+                {activeTab === 'proposals' && 'PROPOSALS & SCOPES'}
+                {activeTab === 'tasks' && 'TASKS & FOLLOW-UP QUEUE'}
+                {activeTab === 'templates' && 'CLIENT COMMUNICATION TEMPLATES'}
                 {activeTab === 'projects' && 'STUDIO CASE STUDIES'}
-                {activeTab === 'settings' && 'SYSTEM & INFRASTRUCTURE'}
+                {activeTab === 'settings' && 'SYSTEM INTEGRATIONS & GATES'}
               </h1>
-              <p className="text-[11px] font-mono text-[#A1A1AA] hidden sm:block">
-                {activeTab === 'overview' && 'Real-time studio CRM metrics, inquiry volume, and conversion health.'}
-                {activeTab === 'leads' && 'Review incoming inquiries, advance stages, and record internal team notes.'}
-                {activeTab === 'followups' && 'Prioritized queue of active leads requiring immediate consultation follow-up.'}
-                {activeTab === 'projects' && 'Production digital platforms and client monographs built by Northup Studio.'}
-                {activeTab === 'settings' && 'Connected Supabase environment, Resend email status, and security gates.'}
+              <p className="text-[11px] font-mono text-[#A6A09A] hidden sm:block">
+                {activeTab === 'overview' && 'Real-time studio CRM metrics, client conversion rate, and pipeline health.'}
+                {activeTab === 'leads' && 'Review incoming inquiries, update lifecycle stages, and personalize client outreach.'}
+                {activeTab === 'clients' && 'Active engaged accounts, project deliverables, and client communications.'}
+                {activeTab === 'proposals' && 'Generate, personalize, and track itemized client proposals and scope agreements.'}
+                {activeTab === 'tasks' && 'Prioritized queue of active leads requiring immediate consultation follow-up.'}
+                {activeTab === 'templates' && '14 professional agency message templates ready for Email & WhatsApp.'}
+                {activeTab === 'projects' && 'Production digital platforms and monographs built by Northup Studio.'}
+                {activeTab === 'settings' && 'Resend email, WhatsApp Cloud API guide, Google Meet OAuth, and database status.'}
               </p>
             </div>
           </div>
 
           {/* Quick Header Actions */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Refresh Button */}
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Refresh database records"
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#A6A09A] hover:text-[#F5F1EB] text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#C6FF00]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#FF8A3D]' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
             </button>
 
-            {/* View Mode Toggle (Table vs Cards) */}
-            {(activeTab === 'leads' || activeTab === 'overview') && (
-              <div className="hidden sm:flex items-center bg-[#1C1C1C] border border-[#2B2B2B] rounded-xl p-0.5">
+            {/* View Mode Toggle */}
+            {(activeTab === 'leads' || activeTab === 'clients') && (
+              <div className="hidden sm:flex items-center bg-[#1D1D1D] border border-[#303030] rounded-xl p-0.5">
                 <button
                   type="button"
                   onClick={() => setViewMode('table')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors ${
-                    viewMode === 'table' ? 'bg-[#2B2B2B] text-[#C6FF00] font-semibold' : 'text-[#A1A1AA] hover:text-[#F5F5F0]'
+                    viewMode === 'table' ? 'bg-[#303030] text-[#FF8A3D] font-semibold' : 'text-[#A6A09A] hover:text-[#F5F1EB]'
                   }`}
                 >
                   Table
@@ -605,7 +995,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                   type="button"
                   onClick={() => setViewMode('cards')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors ${
-                    viewMode === 'cards' ? 'bg-[#2B2B2B] text-[#C6FF00] font-semibold' : 'text-[#A1A1AA] hover:text-[#F5F5F0]'
+                    viewMode === 'cards' ? 'bg-[#303030] text-[#FF8A3D] font-semibold' : 'text-[#A6A09A] hover:text-[#F5F1EB]'
                   }`}
                 >
                   Cards
@@ -618,7 +1008,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
               type="button"
               onClick={handleExportCSV}
               title="Export leads to CSV"
-              className="px-3 py-1.5 rounded-xl bg-[#C6FF00] hover:bg-[#b4ea00] text-black font-mono font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-mono font-bold text-xs transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,138,61,0.25)] active:scale-95 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export CSV</span>
@@ -626,24 +1016,24 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           </div>
         </header>
 
-        {/* Action Notification Toast */}
+        {/* Notification Toast */}
         <AnimatePresence>
           {actionSuccessMessage && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#141414] border border-[#C6FF00]/40 text-[#C6FF00] text-xs font-mono shadow-2xl flex items-center gap-2"
+              className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#1D1D1D] border border-[#FF8A3D]/50 text-[#FF8A3D] text-xs font-mono shadow-2xl flex items-center gap-2"
             >
-              <CheckCircle2 className="w-4 h-4 text-[#C6FF00]" />
+              <CheckCircle2 className="w-4 h-4 text-[#FF8A3D]" />
               <span>{actionSuccessMessage}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Scrollable Workspace */}
+        {/* Workspace Views */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
-          {/* Global Error Banner */}
+          {/* Error Banner */}
           {errorMessage && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
@@ -664,128 +1054,147 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* 3. KPI SUMMARY CARDS */}
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
                 {/* Total Leads */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
-                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A6A09A] text-xs font-mono mb-2">
                     <span>Total Enquiries</span>
-                    <Inbox className="w-4 h-4 text-[#A1A1AA]" />
+                    <Inbox className="w-4 h-4 text-[#A6A09A]" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#F5F5F0]">
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#F5F1EB]">
                     {metrics.total || 0}
                   </div>
-                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
-                    All-time website leads
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Website inquiries
                   </p>
                 </div>
 
                 {/* New Enquiries */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#C6FF00]/40 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-[#C6FF00]/10 rounded-bl-full pointer-events-none" />
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#FF8A3D]/40 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-[#FF8A3D]/10 rounded-bl-full pointer-events-none" />
                   <div className="flex items-center justify-between text-xs font-mono mb-2">
-                    <span className="text-[#C6FF00] font-semibold">New Enquiries</span>
-                    <Sparkles className="w-4 h-4 text-[#C6FF00]" />
+                    <span className="text-[#FF8A3D] font-bold">New Enquiries</span>
+                    <Sparkles className="w-4 h-4 text-[#FF8A3D]" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#C6FF00]">
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#FF8A3D]">
                     {metrics.new || 0}
                   </div>
-                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
-                    Awaiting initial response
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Awaiting response
                   </p>
                 </div>
 
                 {/* Qualified */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
-                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A6A09A] text-xs font-mono mb-2">
                     <span>Qualified</span>
                     <CheckCircle2 className="w-4 h-4 text-amber-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-bold font-mono text-amber-400">
                     {metrics.qualified || 0}
                   </div>
-                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
-                    High intent &amp; budget match
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Scope verified
+                  </p>
+                </div>
+
+                {/* Proposals Sent */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A6A09A] text-xs font-mono mb-2">
+                    <span>Proposals Sent</span>
+                    <FileSignature className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-purple-400">
+                    {metrics.proposal_sent || 0}
+                  </div>
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Pending decision
                   </p>
                 </div>
 
                 {/* Won Projects */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm">
-                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm">
+                  <div className="flex items-center justify-between text-[#A6A09A] text-xs font-mono mb-2">
                     <span>Won Projects</span>
                     <Trophy className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400">
                     {metrics.won || 0}
                   </div>
-                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
-                    Engaged studio contracts
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Active client deals
                   </p>
                 </div>
 
                 {/* Lost Leads */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm col-span-2 lg:col-span-1">
-                  <div className="flex items-center justify-between text-[#A1A1AA] text-xs font-mono mb-2">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm col-span-2 lg:col-span-1">
+                  <div className="flex items-center justify-between text-[#A6A09A] text-xs font-mono mb-2">
                     <span>Lost / Archived</span>
                     <XCircle className="w-4 h-4 text-zinc-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-bold font-mono text-zinc-400">
                     {metrics.lost || 0}
                   </div>
-                  <p className="text-[11px] font-mono text-[#A1A1AA] mt-1.5">
-                    Out of scope / non-fit
+                  <p className="text-[11px] font-mono text-[#A6A09A] mt-1.5">
+                    Non-fit / archived
                   </p>
                 </div>
               </div>
 
               {/* Conversion & Pipeline Health Bar */}
-              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] shadow-sm font-mono">
+              <div className="p-5 rounded-2xl bg-[#151515] border border-[#303030] shadow-sm font-mono">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
                   <div>
-                    <h3 className="text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
+                    <h3 className="text-xs uppercase font-bold tracking-wider text-[#F5F1EB]">
                       Pipeline Distribution &amp; Win Rate
                     </h3>
-                    <p className="text-[11px] text-[#A1A1AA] mt-0.5">
-                      Conversion efficiency: <span className="text-[#C6FF00] font-bold">{winRate}%</span> closed-won engagement rate.
+                    <p className="text-[11px] text-[#A6A09A] mt-0.5">
+                      Conversion efficiency: <span className="text-[#FF8A3D] font-bold">{winRate}%</span> closed-won engagement rate.
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-[11px]">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#C6FF00]" />
-                      <span className="text-[#A1A1AA]">New ({metrics.new || 0})</span>
+                      <span className="w-2 h-2 rounded-full bg-[#FF8A3D]" />
+                      <span className="text-[#A6A09A]">New ({metrics.new || 0})</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-sky-400" />
-                      <span className="text-[#A1A1AA]">Contacted ({metrics.contacted || 0})</span>
+                      <span className="text-[#A6A09A]">Contacted ({metrics.contacted || 0})</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-amber-400" />
-                      <span className="text-[#A1A1AA]">Qualified ({metrics.qualified || 0})</span>
+                      <span className="text-[#A6A09A]">Qualified ({metrics.qualified || 0})</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-purple-400" />
-                      <span className="text-[#A1A1AA]">Proposal ({metrics.proposal_sent || 0})</span>
+                      <span className="text-[#A6A09A]">Proposal ({metrics.proposal_sent || 0})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#E96D24]" />
+                      <span className="text-[#A6A09A]">Negotiation ({metrics.negotiation || 0})</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span className="text-[#A1A1AA]">Won ({metrics.won || 0})</span>
+                      <span className="text-[#A6A09A]">Won ({metrics.won || 0})</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Multi-segment Progress Bar */}
-                <div className="h-2.5 w-full bg-[#1C1C1C] rounded-full overflow-hidden flex border border-[#2B2B2B]">
+                {/* Progress Bar */}
+                <div className="h-2.5 w-full bg-[#1D1D1D] rounded-full overflow-hidden flex border border-[#303030]">
                   {metrics.total > 0 ? (
                     <>
-                      <div style={{ width: `${(metrics.new / metrics.total) * 100}%` }} className="bg-[#C6FF00] h-full" title="New" />
+                      <div style={{ width: `${(metrics.new / metrics.total) * 100}%` }} className="bg-[#FF8A3D] h-full" title="New" />
                       <div style={{ width: `${(metrics.contacted / metrics.total) * 100}%` }} className="bg-sky-400 h-full" title="Contacted" />
                       <div style={{ width: `${(metrics.qualified / metrics.total) * 100}%` }} className="bg-amber-400 h-full" title="Qualified" />
                       <div style={{ width: `${(metrics.proposal_sent / metrics.total) * 100}%` }} className="bg-purple-400 h-full" title="Proposal Sent" />
+                      <div style={{ width: `${((metrics.negotiation || 0) / metrics.total) * 100}%` }} className="bg-[#E96D24] h-full" title="Negotiation" />
                       <div style={{ width: `${(metrics.won / metrics.total) * 100}%` }} className="bg-emerald-400 h-full" title="Won" />
                       <div style={{ width: `${(metrics.lost / metrics.total) * 100}%` }} className="bg-zinc-600 h-full" title="Lost" />
                     </>
                   ) : (
-                    <div className="w-full bg-[#2B2B2B] h-full" />
+                    <div className="w-full bg-[#303030] h-full" />
                   )}
                 </div>
               </div>
@@ -796,57 +1205,57 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 <div className="lg:col-span-2 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
-                        Recent Inquiries
+                      <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F1EB]">
+                        Recent Client Inquiries
                       </h3>
-                      <p className="font-mono text-[11px] text-[#A1A1AA]">
-                        Latest client submissions through the official website.
+                      <p className="font-mono text-[11px] text-[#A6A09A]">
+                        Live submissions received through the agency website.
                       </p>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setActiveTab('leads')}
-                      className="text-xs font-mono text-[#C6FF00] hover:underline cursor-pointer"
+                      className="text-xs font-mono text-[#FF8A3D] hover:underline cursor-pointer"
                     >
-                      View all in Leads Pipeline &rarr;
+                      View All in Pipeline &rarr;
                     </button>
                   </div>
 
                   {isLoading ? (
-                    <div className="p-8 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#C6FF00] mb-2" />
+                    <div className="p-8 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono text-xs text-[#A6A09A]">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#FF8A3D] mb-2" />
                       Loading recent enquiries...
                     </div>
                   ) : leads.length === 0 ? (
-                    <div className="p-8 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
+                    <div className="p-8 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono text-xs text-[#A6A09A]">
                       No enquiries recorded yet.
                     </div>
                   ) : (
-                    <div className="rounded-2xl bg-[#141414] border border-[#2B2B2B] overflow-hidden divide-y divide-[#2B2B2B]">
+                    <div className="rounded-2xl bg-[#151515] border border-[#303030] overflow-hidden divide-y divide-[#303030]">
                       {leads.slice(0, 5).map((lead) => (
                         <div
                           key={lead.id}
-                          className="p-4 hover:bg-[#1C1C1C] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs cursor-pointer"
+                          className="p-4 hover:bg-[#1D1D1D] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs cursor-pointer"
                           onClick={() => openLeadDetail(lead)}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-[#F5F5F0] truncate">
+                              <span className="font-bold text-[#F5F1EB] truncate">
                                 {lead.name}
                               </span>
                               {lead.company && (
-                                <span className="text-[11px] text-[#A1A1AA]">
+                                <span className="text-[11px] text-[#A6A09A]">
                                   &middot; {lead.company}
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 mt-1 text-[11px] text-[#A1A1AA]">
+                            <div className="flex items-center gap-3 mt-1 text-[11px] text-[#A6A09A]">
                               <span>{lead.service || 'Web Platform'}</span>
                               {lead.budget && (
                                 <>
                                   <span>&middot;</span>
-                                  <span className="text-[#C6FF00]">{lead.budget}</span>
+                                  <span className="text-[#FF8A3D]">{lead.budget}</span>
                                 </>
                               )}
                               <span>&middot;</span>
@@ -862,7 +1271,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                                 e.stopPropagation()
                                 openLeadDetail(lead)
                               }}
-                              className="px-2.5 py-1 rounded-lg bg-[#1C1C1C] hover:bg-[#2B2B2B] text-[#F5F5F0] text-[11px] border border-[#2B2B2B]"
+                              className="px-2.5 py-1 rounded-lg bg-[#1D1D1D] hover:bg-[#282828] text-[#F5F1EB] text-[11px] border border-[#303030]"
                             >
                               Review ↗
                             </button>
@@ -876,20 +1285,20 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 {/* Right 1 Col: Follow-up Queue */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F5F0]">
+                    <h3 className="font-mono text-xs uppercase font-bold tracking-wider text-[#F5F1EB]">
                       Follow-up Queue
                     </h3>
-                    <p className="font-mono text-[11px] text-[#A1A1AA]">
-                      Inquiries awaiting consultation response.
+                    <p className="font-mono text-[11px] text-[#A6A09A]">
+                      Leads awaiting consultation outreach.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3 font-mono text-xs">
+                  <div className="p-4 rounded-2xl bg-[#151515] border border-[#303030] space-y-3 font-mono text-xs">
                     {followUpLeads.length === 0 ? (
-                      <div className="py-8 text-center text-[#A1A1AA]">
-                        <CheckCircle2 className="w-8 h-8 text-[#C6FF00] mx-auto mb-2 opacity-80" />
-                        <p className="font-semibold text-[#F5F5F0]">All caught up!</p>
-                        <p className="text-[11px] text-[#A1A1AA] mt-1">
+                      <div className="py-8 text-center text-[#A6A09A]">
+                        <CheckCircle2 className="w-8 h-8 text-[#FF8A3D] mx-auto mb-2 opacity-80" />
+                        <p className="font-semibold text-[#F5F1EB]">All caught up!</p>
+                        <p className="text-[11px] text-[#A6A09A] mt-1">
                           No pending client follow-ups in queue.
                         </p>
                       </div>
@@ -898,20 +1307,20 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                         <div
                           key={lead.id}
                           onClick={() => openLeadDetail(lead)}
-                          className="p-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-colors cursor-pointer"
+                          className="p-3 rounded-xl bg-[#1D1D1D] border border-[#303030] hover:border-[#454545] transition-colors cursor-pointer"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-[#F5F5F0] truncate">
+                            <span className="font-bold text-[#F5F1EB] truncate">
                               {lead.name}
                             </span>
                             {getStatusBadge(lead.status)}
                           </div>
-                          <p className="text-[11px] text-[#A1A1AA] truncate">
+                          <p className="text-[11px] text-[#A6A09A] truncate">
                             {lead.service} {lead.budget ? `(${lead.budget})` : ''}
                           </p>
-                          <div className="mt-2 flex items-center justify-between text-[10px] text-[#A1A1AA]">
+                          <div className="mt-2 flex items-center justify-between text-[10px] text-[#A6A09A]">
                             <span>Received: {formatDate(lead.created_at)}</span>
-                            <span className="text-[#C6FF00] hover:underline">Open Drawer &rarr;</span>
+                            <span className="text-[#FF8A3D] hover:underline">Open &rarr;</span>
                           </div>
                         </div>
                       ))
@@ -928,7 +1337,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           {activeTab === 'leads' && (
             <div className="space-y-6">
               {/* Pipeline Status Filter Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#2B2B2B] font-mono text-xs">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#303030] font-mono text-xs">
                 {PIPELINE_STATUSES.map((status) => {
                   const count =
                     status.key === 'all'
@@ -942,16 +1351,16 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                       onClick={() => setSelectedStatus(status.key)}
                       className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
                         selectedStatus === status.key
-                          ? 'bg-[#141414] text-[#C6FF00] border border-[#C6FF00]/40 font-bold shadow-sm'
-                          : 'text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#141414]'
+                          ? 'bg-[#151515] text-[#FF8A3D] border border-[#FF8A3D]/40 font-bold shadow-sm'
+                          : 'text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#151515]'
                       }`}
                     >
                       <span>{status.label}</span>
                       <span
                         className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
                           selectedStatus === status.key
-                            ? 'bg-[#C6FF00] text-black font-bold'
-                            : 'bg-[#1C1C1C] text-[#A1A1AA]'
+                            ? 'bg-[#FF8A3D] text-black font-bold'
+                            : 'bg-[#1D1D1D] text-[#A6A09A]'
                         }`}
                       >
                         {count}
@@ -963,80 +1372,64 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
 
               {/* Filters Toolbar */}
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 font-mono text-xs">
-                {/* Search Bar */}
                 <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search leads by name, email, company..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA] text-xs focus:outline-none transition-colors"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#151515] border border-[#303030] focus:border-[#FF8A3D] text-[#F5F1EB] placeholder-[#A6A09A] text-xs focus:outline-none transition-colors"
                   />
-                  <Search className="w-4 h-4 text-[#A1A1AA] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-[#A6A09A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </form>
 
                 <div className="flex items-center gap-2.5">
-                  {/* Service Filter */}
                   <div className="relative">
                     <select
                       value={selectedService}
                       onChange={(e) => setSelectedService(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] text-xs focus:outline-none focus:border-[#C6FF00] cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2.5 rounded-xl bg-[#151515] border border-[#303030] text-[#F5F1EB] text-xs focus:outline-none focus:border-[#FF8A3D] cursor-pointer"
                     >
                       {SERVICES_LIST.map((srv) => (
-                        <option key={srv} value={srv} className="bg-[#141414] text-[#F5F5F0]">
+                        <option key={srv} value={srv} className="bg-[#151515] text-[#F5F1EB]">
                           {srv}
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#A1A1AA] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#A6A09A] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
 
-                  {/* Sort Order */}
                   <button
                     type="button"
                     onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-                    className="px-3 py-2.5 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-xs flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-2.5 rounded-xl bg-[#151515] border border-[#303030] text-[#A6A09A] hover:text-[#F5F1EB] text-xs flex items-center gap-1.5 cursor-pointer"
                   >
-                    <ArrowUpDown className="w-3.5 h-3.5 text-[#C6FF00]" />
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#FF8A3D]" />
                     <span>{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Data View: Table or Cards */}
+              {/* Data View */}
               {isLoading ? (
-                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#C6FF00] mb-3" />
+                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono text-xs text-[#A6A09A]">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#FF8A3D] mb-3" />
                   Retrieving leads from Supabase database...
                 </div>
               ) : leads.length === 0 ? (
-                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono text-xs text-[#A1A1AA]">
-                  <Inbox className="w-10 h-10 mx-auto text-[#A1A1AA] mb-3 opacity-60" />
-                  <p className="text-sm font-bold text-[#F5F5F0]">No matching enquiries found</p>
-                  <p className="mt-1 text-[#A1A1AA]">
+                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono text-xs text-[#A6A09A]">
+                  <Inbox className="w-10 h-10 mx-auto text-[#A6A09A] mb-3 opacity-60" />
+                  <p className="text-sm font-bold text-[#F5F1EB]">No matching enquiries found</p>
+                  <p className="mt-1 text-[#A6A09A]">
                     {search ? `No records matched search term "${search}".` : 'No leads match the selected filter criteria.'}
                   </p>
-                  {(search || selectedStatus !== 'all' || selectedService !== 'All Services') && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearch('')
-                        setSelectedStatus('all')
-                        setSelectedService('All Services')
-                      }}
-                      className="mt-4 px-4 py-2 rounded-xl bg-[#1C1C1C] hover:bg-[#2B2B2B] text-[#C6FF00] text-xs font-bold border border-[#2B2B2B] transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  )}
                 </div>
               ) : viewMode === 'table' ? (
                 /* TABLE VIEW */
-                <div className="rounded-2xl bg-[#141414] border border-[#2B2B2B] overflow-hidden shadow-sm">
+                <div className="rounded-2xl bg-[#151515] border border-[#303030] overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left font-mono text-xs">
-                      <thead className="bg-[#0E0E0E] text-[#A1A1AA] border-b border-[#2B2B2B] uppercase text-[10px] tracking-wider">
+                      <thead className="bg-[#101010] text-[#A6A09A] border-b border-[#303030] uppercase text-[10px] tracking-wider">
                         <tr>
                           <th className="py-3 px-4">Client / Brand</th>
                           <th className="py-3 px-4">Contact</th>
@@ -1047,31 +1440,29 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                           <th className="py-3 px-4 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#2B2B2B]">
+                      <tbody className="divide-y divide-[#303030]">
                         {leads.map((lead) => (
                           <tr
                             key={lead.id}
-                            className="hover:bg-[#1C1C1C]/70 transition-colors cursor-pointer group"
+                            className="hover:bg-[#1D1D1D]/70 transition-colors cursor-pointer group"
                             onClick={() => openLeadDetail(lead)}
                           >
-                            {/* Client & Company */}
                             <td className="py-3.5 px-4">
-                              <div className="font-bold text-[#F5F5F0] group-hover:text-[#C6FF00] transition-colors">
+                              <div className="font-bold text-[#F5F1EB] group-hover:text-[#FF8A3D] transition-colors">
                                 {lead.name}
                               </div>
                               {lead.company && (
-                                <div className="text-[11px] text-[#A1A1AA]">
+                                <div className="text-[11px] text-[#A6A09A]">
                                   {lead.company}
                                 </div>
                               )}
                             </td>
 
-                            {/* Contact Email */}
                             <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center gap-1.5">
                                 <a
                                   href={`mailto:${lead.email}`}
-                                  className="text-[#F5F5F0] hover:text-[#C6FF00] hover:underline"
+                                  className="text-[#F5F1EB] hover:text-[#FF8A3D] hover:underline"
                                 >
                                   {lead.email}
                                 </a>
@@ -1079,61 +1470,57 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                                   type="button"
                                   onClick={() => copyToClipboard(lead.email)}
                                   title="Copy Email"
-                                  className="p-1 rounded text-[#A1A1AA] hover:text-[#F5F5F0] hover:bg-[#2B2B2B]"
+                                  className="p-1 rounded text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#303030]"
                                 >
                                   <Copy className="w-3 h-3" />
                                 </button>
                               </div>
                             </td>
 
-                            {/* Service */}
                             <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-[#1C1C1C] border border-[#2B2B2B] text-[11px] text-[#F5F5F0]">
+                              <span className="px-2 py-0.5 rounded-md bg-[#1D1D1D] border border-[#303030] text-[11px] text-[#F5F1EB]">
                                 {lead.service || 'Web Platform'}
                               </span>
                             </td>
 
-                            {/* Budget & Timeline */}
                             <td className="py-3.5 px-4 text-[11px]">
-                              <div className="text-[#C6FF00] font-medium">
+                              <div className="text-[#FF8A3D] font-medium">
                                 {lead.budget || 'Unspecified'}
                               </div>
-                              <div className="text-[#A1A1AA]">
+                              <div className="text-[#A6A09A]">
                                 {lead.timeline || 'Flexible'}
                               </div>
                             </td>
 
-                            {/* Date */}
-                            <td className="py-3.5 px-4 text-[11px] text-[#A1A1AA]">
+                            <td className="py-3.5 px-4 text-[11px] text-[#A6A09A]">
                               {formatDate(lead.created_at)}
                             </td>
 
-                            {/* Status Selector */}
                             <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                               <div className="relative inline-block">
                                 <select
                                   value={lead.status}
                                   disabled={updatingStatusId === lead.id}
                                   onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                                  className="appearance-none pl-2.5 pr-6 py-1 rounded-full text-[11px] font-mono font-medium uppercase tracking-wider bg-[#1C1C1C] border border-[#2B2B2B] text-[#F5F5F0] focus:border-[#C6FF00] focus:outline-none cursor-pointer"
+                                  className="appearance-none pl-2.5 pr-6 py-1 rounded-full text-[11px] font-mono font-medium uppercase tracking-wider bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] focus:border-[#FF8A3D] focus:outline-none cursor-pointer"
                                 >
                                   <option value="new">● New</option>
                                   <option value="contacted">● Contacted</option>
                                   <option value="qualified">● Qualified</option>
                                   <option value="proposal_sent">● Proposal Sent</option>
+                                  <option value="negotiation">● Negotiation</option>
                                   <option value="won">● Won</option>
                                   <option value="lost">● Lost</option>
                                 </select>
-                                <ChevronDown className="w-3 h-3 text-[#A1A1AA] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <ChevronDown className="w-3 h-3 text-[#A6A09A] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                               </div>
                             </td>
 
-                            {/* Actions */}
                             <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() => openLeadDetail(lead)}
-                                className="px-3 py-1 rounded-lg bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#F5F5F0] text-[11px] hover:text-[#C6FF00] transition-colors"
+                                className="px-3 py-1 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#F5F1EB] text-[11px] hover:text-[#FF8A3D] transition-colors"
                               >
                                 Review ↗
                               </button>
@@ -1151,52 +1538,47 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                     <div
                       key={lead.id}
                       onClick={() => openLeadDetail(lead)}
-                      className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-all flex flex-col justify-between font-mono text-xs cursor-pointer group shadow-sm"
+                      className="p-5 rounded-2xl bg-[#151515] border border-[#303030] hover:border-[#454545] transition-all flex flex-col justify-between font-mono text-xs cursor-pointer group shadow-sm"
                     >
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           {getStatusBadge(lead.status)}
-                          <span className="text-[11px] text-[#A1A1AA]">
+                          <span className="text-[11px] text-[#A6A09A]">
                             {formatDate(lead.created_at)}
                           </span>
                         </div>
 
-                        <h4 className="text-sm font-bold text-[#F5F5F0] group-hover:text-[#C6FF00] transition-colors mb-0.5">
+                        <h4 className="text-sm font-bold text-[#F5F1EB] group-hover:text-[#FF8A3D] transition-colors mb-0.5">
                           {lead.name}
                         </h4>
                         {lead.company && (
-                          <p className="text-[11px] text-[#A1A1AA] mb-2">{lead.company}</p>
+                          <p className="text-[11px] text-[#A6A09A] mb-2">{lead.company}</p>
                         )}
 
                         <div className="flex flex-wrap gap-1.5 mb-3">
-                          <span className="px-2 py-0.5 rounded bg-[#1C1C1C] border border-[#2B2B2B] text-[10px] text-[#F5F5F0]">
+                          <span className="px-2 py-0.5 rounded bg-[#1D1D1D] border border-[#303030] text-[10px] text-[#F5F1EB]">
                             {lead.service || 'Web Platform'}
                           </span>
                           {lead.budget && (
-                            <span className="px-2 py-0.5 rounded bg-[#C6FF00]/10 border border-[#C6FF00]/30 text-[10px] text-[#C6FF00]">
+                            <span className="px-2 py-0.5 rounded bg-[#FF8A3D]/10 border border-[#FF8A3D]/30 text-[10px] text-[#FF8A3D]">
                               {lead.budget}
-                            </span>
-                          )}
-                          {lead.timeline && (
-                            <span className="px-2 py-0.5 rounded bg-[#1C1C1C] border border-[#2B2B2B] text-[10px] text-[#A1A1AA]">
-                              {lead.timeline}
                             </span>
                           )}
                         </div>
 
                         {lead.project_description && (
-                          <p className="text-[11px] text-[#A1A1AA] line-clamp-2 leading-relaxed bg-[#0E0E0E] p-2.5 rounded-xl border border-[#2B2B2B]/60 mb-4">
+                          <p className="text-[11px] text-[#A6A09A] line-clamp-2 leading-relaxed bg-[#101010] p-2.5 rounded-xl border border-[#303030]/60 mb-4">
                             {lead.project_description}
                           </p>
                         )}
                       </div>
 
-                      <div className="pt-3 border-t border-[#2B2B2B] flex items-center justify-between">
-                        <span className="text-[11px] text-[#A1A1AA] truncate max-w-[150px]">
+                      <div className="pt-3 border-t border-[#303030] flex items-center justify-between">
+                        <span className="text-[11px] text-[#A6A09A] truncate max-w-[150px]">
                           {lead.email}
                         </span>
-                        <span className="text-[11px] text-[#C6FF00] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                          <span>Details</span>
+                        <span className="text-[11px] text-[#FF8A3D] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          <span>Dossier</span>
                           <span>&rarr;</span>
                         </span>
                       </div>
@@ -1205,9 +1587,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 </div>
               )}
 
-              {/* Pagination Controls */}
+              {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between font-mono text-xs text-[#A1A1AA] pt-2">
+                <div className="flex items-center justify-between font-mono text-xs text-[#A6A09A] pt-2">
                   <div>
                     Showing {(pagination.page - 1) * pagination.pageSize + 1} to{' '}
                     {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of{' '}
@@ -1219,18 +1601,18 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                       type="button"
                       disabled={pagination.page <= 1}
                       onClick={() => loadLeads(pagination.page - 1)}
-                      className="p-2 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1C]"
+                      className="p-2 rounded-xl bg-[#151515] border border-[#303030] text-[#F5F1EB] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1D1D1D]"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="text-[#F5F5F0] px-2 font-bold">
+                    <span className="text-[#F5F1EB] px-2 font-bold">
                       Page {pagination.page} of {pagination.totalPages}
                     </span>
                     <button
                       type="button"
                       disabled={pagination.page >= pagination.totalPages}
                       onClick={() => loadLeads(pagination.page + 1)}
-                      className="p-2 rounded-xl bg-[#141414] border border-[#2B2B2B] text-[#F5F5F0] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1C]"
+                      className="p-2 rounded-xl bg-[#151515] border border-[#303030] text-[#F5F1EB] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1D1D1D]"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -1241,88 +1623,170 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           )}
 
           {/* =========================================================================
-              VIEW C: FOLLOW-UP QUEUE TAB
+              VIEW C: CLIENTS TAB (Won / Converted Accounts)
              ========================================================================= */}
-          {activeTab === 'followups' && (
+          {activeTab === 'clients' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0]">
-                  Client Follow-up Priority Queue
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB]">
+                  Active Client Accounts &amp; Retainers
                 </h2>
-                <p className="text-xs font-mono text-[#A1A1AA] mt-1">
-                  Active inquiries awaiting consultation scheduling or proposal submission.
+                <p className="text-xs font-mono text-[#A6A09A] mt-1">
+                  Client engagements converted from won pipeline proposals.
                 </p>
               </div>
 
-              {followUpLeads.length === 0 ? (
-                <div className="p-16 rounded-2xl bg-[#141414] border border-[#2B2B2B] text-center font-mono">
-                  <ShieldCheck className="w-12 h-12 text-[#C6FF00] mx-auto mb-3 opacity-90" />
-                  <h3 className="text-base font-bold text-[#F5F5F0]">All Follow-ups Completed</h3>
-                  <p className="text-xs text-[#A1A1AA] max-w-md mx-auto mt-1 leading-relaxed">
-                    No active inquiries currently require follow-up. All received leads have been addressed or advanced through the pipeline.
+              {wonClients.length === 0 ? (
+                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
+                  <Trophy className="w-10 h-10 text-[#FF8A3D] mx-auto mb-3 opacity-60" />
+                  <p className="text-sm font-bold text-[#F5F1EB]">No Active Clients Yet</p>
+                  <p className="text-xs text-[#A6A09A] mt-1">
+                    Mark a lead as "Won" to convert them into an active client engagement.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                  {followUpLeads.map((lead) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono text-xs">
+                  {wonClients.map((client) => (
                     <div
-                      key={lead.id}
-                      className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] hover:border-[#3E3E3E] transition-all flex flex-col justify-between shadow-sm"
+                      key={client.id}
+                      onClick={() => openLeadDetail(client)}
+                      className="p-5 rounded-2xl bg-[#151515] border border-[#303030] hover:border-[#FF8A3D]/50 transition-all flex flex-col justify-between cursor-pointer"
                     >
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          {getStatusBadge(lead.status)}
-                          <span className="text-[11px] text-[#A1A1AA]">
-                            Received: {formatDate(lead.created_at)}
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            ACTIVE CLIENT
+                          </span>
+                          <span className="text-[11px] text-[#A6A09A]">
+                            Won: {formatDate(client.converted_at || client.created_at)}
                           </span>
                         </div>
 
-                        <h4 className="text-sm font-bold text-[#F5F5F0] mb-0.5">
-                          {lead.name}
-                        </h4>
-                        {lead.company && (
-                          <p className="text-[11px] text-[#A1A1AA] mb-2">{lead.company}</p>
+                        <h3 className="text-base font-bold text-[#F5F1EB] mb-0.5">
+                          {client.name}
+                        </h3>
+                        {client.company && (
+                          <p className="text-xs text-[#A6A09A] mb-2">{client.company}</p>
                         )}
 
-                        <div className="p-3 rounded-xl bg-[#0E0E0E] border border-[#2B2B2B] space-y-1.5 text-[11px] my-3">
+                        <div className="p-3 rounded-xl bg-[#101010] border border-[#303030] space-y-1.5 my-3 text-[11px]">
                           <div className="flex justify-between">
-                            <span className="text-[#A1A1AA]">Email:</span>
-                            <a href={`mailto:${lead.email}`} className="text-[#F5F5F0] hover:text-[#C6FF00] hover:underline">
-                              {lead.email}
-                            </a>
+                            <span className="text-[#A6A09A]">Service:</span>
+                            <span className="text-[#F5F1EB]">{client.service}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-[#A1A1AA]">Service:</span>
-                            <span className="text-[#F5F5F0]">{lead.service}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-[#A1A1AA]">Budget:</span>
-                            <span className="text-[#C6FF00]">{lead.budget || 'Flexible'}</span>
+                            <span className="text-[#A6A09A]">Budget Scope:</span>
+                            <span className="text-[#FF8A3D] font-bold">{client.budget || 'Custom'}</span>
                           </div>
                         </div>
-
-                        {lead.project_description && (
-                          <p className="text-[11px] text-[#A1A1AA] line-clamp-3 leading-relaxed mb-4">
-                            "{lead.project_description}"
-                          </p>
-                        )}
                       </div>
 
-                      <div className="pt-3 border-t border-[#2B2B2B] flex items-center justify-between gap-2">
+                      <div className="pt-3 border-t border-[#303030] flex items-center justify-between">
                         <button
                           type="button"
-                          onClick={() => handleStatusChange(lead.id, 'contacted')}
-                          className="px-3 py-1.5 rounded-lg bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#A1A1AA] hover:text-[#F5F5F0] text-[11px] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openLeadDetail(client)
+                            openCommunicationModal('project_accepted')
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-[#FF8A3D]/10 hover:bg-[#FF8A3D]/20 text-[#FF8A3D] text-[10px] font-bold"
                         >
-                          Mark Contacted
+                          Client Actions ↗
                         </button>
+                        <span className="text-[11px] text-[#A6A09A]">Open Dossier &rarr;</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
+          {/* =========================================================================
+              VIEW D: PROPOSALS HUB TAB (Phase H)
+             ========================================================================= */}
+          {activeTab === 'proposals' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB]">
+                    Proposals &amp; Scope Documents
+                  </h2>
+                  <p className="text-xs font-mono text-[#A6A09A] mt-1">
+                    Bespoke agency proposals, milestone schedules, and itemized contracts.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!leads.length) {
+                      alert('You must have at least one lead to generate a proposal.')
+                      return
+                    }
+                    if (!selectedLead) setSelectedLead(leads[0])
+                    setProposalTitle(selectedLead?.service ? `${selectedLead.service} Proposal` : 'Digital Experience Platform')
+                    setProposalOverview(`Comprehensive design engineering engagement for ${selectedLead?.company || selectedLead?.name || 'Client'}.`)
+                    setProposalModalOpen(true)
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-mono font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Draft New Proposal</span>
+                </button>
+              </div>
+
+              {leadProposals.length === 0 ? (
+                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
+                  <FileSignature className="w-10 h-10 text-[#FF8A3D] mx-auto mb-3 opacity-60" />
+                  <p className="text-sm font-bold text-[#F5F1EB]">No Active Proposals Found</p>
+                  <p className="text-xs text-[#A6A09A] mt-1 max-w-sm mx-auto">
+                    Draft a bespoke proposal for any client in your pipeline with itemized scope, deliverables, and payment terms.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono text-xs">
+                  {leadProposals.map((prop) => (
+                    <div
+                      key={prop.id}
+                      className="p-5 rounded-2xl bg-[#151515] border border-[#303030] flex flex-col justify-between shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] font-bold text-[#FF8A3D] tracking-widest">
+                            {prop.proposal_number}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#1D1D1D] text-[#A6A09A] border border-[#303030]">
+                            {prop.status}
+                          </span>
+                        </div>
+
+                        <h3 className="text-sm font-bold text-[#F5F1EB] mb-1">
+                          {prop.title}
+                        </h3>
+                        <p className="text-[11px] text-[#A6A09A] mb-3">
+                          Client: {prop.client_name} {prop.client_company ? `(${prop.client_company})` : ''}
+                        </p>
+
+                        <div className="p-3 rounded-xl bg-[#101010] border border-[#303030] space-y-1 my-3 text-[11px]">
+                          <div className="flex justify-between">
+                            <span className="text-[#A6A09A]">Investment Total:</span>
+                            <span className="text-[#FF8A3D] font-bold">${prop.total_amount || 0} {prop.currency}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#A6A09A]">Valid Until:</span>
+                            <span className="text-[#F5F1EB]">{prop.valid_until || '14 Days'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-[#303030] flex items-center justify-between gap-2">
                         <button
                           type="button"
-                          onClick={() => openLeadDetail(lead)}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#C6FF00] hover:bg-[#b4ea00] text-black font-bold text-[11px] transition-colors"
+                          onClick={() => setSelectedProposalToView(prop)}
+                          className="flex-1 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#F5F1EB] text-[11px] transition-colors"
                         >
-                          Review &amp; Notes ↗
+                          View Document ↗
                         </button>
                       </div>
                     </div>
@@ -1333,15 +1797,187 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           )}
 
           {/* =========================================================================
-              VIEW D: CASE STUDIES / PROJECTS TAB
+              VIEW E: TASKS & FOLLOW-UP QUEUE (Phase I)
+             ========================================================================= */}
+          {activeTab === 'tasks' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB]">
+                  Follow-up Queue &amp; Lead Deadlines
+                </h2>
+                <p className="text-xs font-mono text-[#A6A09A] mt-1">
+                  Active client consultations requiring follow-up, proposal submissions, or onboarding.
+                </p>
+              </div>
+
+              {followUpLeads.length === 0 ? (
+                <div className="p-16 rounded-2xl bg-[#151515] border border-[#303030] text-center font-mono">
+                  <ShieldCheck className="w-12 h-12 text-[#FF8A3D] mx-auto mb-3 opacity-90" />
+                  <h3 className="text-base font-bold text-[#F5F1EB]">All Follow-ups Complete</h3>
+                  <p className="text-xs text-[#A6A09A] max-w-md mx-auto mt-1 leading-relaxed">
+                    No active inquiries currently require follow-up. All client inquiries have been addressed.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                  {followUpLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="p-5 rounded-2xl bg-[#151515] border border-[#303030] hover:border-[#454545] transition-all flex flex-col justify-between shadow-sm"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          {getStatusBadge(lead.status)}
+                          <span className="text-[11px] text-[#A6A09A]">
+                            Received: {formatDate(lead.created_at)}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-[#F5F1EB] mb-0.5">
+                          {lead.name}
+                        </h4>
+                        {lead.company && (
+                          <p className="text-[11px] text-[#A6A09A] mb-2">{lead.company}</p>
+                        )}
+
+                        <div className="p-3 rounded-xl bg-[#101010] border border-[#303030] space-y-1.5 text-[11px] my-3">
+                          <div className="flex justify-between">
+                            <span className="text-[#A6A09A]">Service:</span>
+                            <span className="text-[#F5F1EB]">{lead.service}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[#A6A09A]">Budget:</span>
+                            <span className="text-[#FF8A3D]">{lead.budget || 'Flexible'}</span>
+                          </div>
+                          {lead.next_follow_up_date && (
+                            <div className="flex justify-between pt-1 border-t border-[#303030]">
+                              <span className="text-[#FF8A3D]">Scheduled Date:</span>
+                              <span className="text-[#F5F1EB] font-bold">{formatDate(lead.next_follow_up_date)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {lead.project_description && (
+                          <p className="text-[11px] text-[#A6A09A] line-clamp-2 leading-relaxed mb-4">
+                            "{lead.project_description}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-[#303030] flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedLead(lead)
+                            openCommunicationModal('polite_followup')
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#FF8A3D] text-[11px] font-bold transition-colors"
+                        >
+                          Send Follow-up ↗
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openLeadDetail(lead)}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold text-[11px] transition-colors"
+                        >
+                          Open Dossier ↗
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW F: TEMPLATES CENTER TAB (Phase C)
+             ========================================================================= */}
+          {activeTab === 'templates' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB]">
+                  Client Communication Template Center
+                </h2>
+                <p className="text-xs font-mono text-[#A6A09A] mt-1">
+                  14 agency message templates with variable interpolation for Email and WhatsApp.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono text-xs">
+                {templatesList.map((tpl) => (
+                  <div
+                    key={tpl.key}
+                    className="p-5 rounded-2xl bg-[#151515] border border-[#303030] flex flex-col justify-between shadow-sm"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FF8A3D]/15 text-[#FF8A3D] border border-[#FF8A3D]/30">
+                          {tpl.category}
+                        </span>
+                        <span className="text-[10px] text-[#A6A09A]">
+                          {tpl.variables?.length || 0} variables
+                        </span>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-[#F5F1EB] mb-1.5">
+                        {tpl.title}
+                      </h3>
+                      {tpl.subject && (
+                        <p className="text-[11px] text-[#A6A09A] line-clamp-1 mb-3">
+                          Subj: {tpl.subject}
+                        </p>
+                      )}
+
+                      <div className="p-3 rounded-xl bg-[#101010] border border-[#303030] text-[11px] text-[#A6A09A] line-clamp-4 leading-relaxed mb-4 whitespace-pre-wrap">
+                        {tpl.body_email}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#303030] flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingTemplateKey(tpl.key)
+                          setEditingTemplateData({ ...tpl })
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#F5F1EB] text-[11px]"
+                      >
+                        Edit Wording
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (leads.length) {
+                            setSelectedLead(leads[0])
+                            openCommunicationModal(tpl.key)
+                          } else {
+                            alert('No leads available to test template.')
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-[#FF8A3D] text-black font-bold text-[11px]"
+                      >
+                        Test / Send ↗
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              VIEW G: PROJECTS / CASE STUDIES TAB
              ========================================================================= */}
           {activeTab === 'projects' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F5F0]">
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#F5F1EB]">
                   Studio Production Monographs
                 </h2>
-                <p className="text-xs font-mono text-[#A1A1AA] mt-1">
+                <p className="text-xs font-mono text-[#A6A09A] mt-1">
                   Verified original client projects and public portfolio case studies.
                 </p>
               </div>
@@ -1350,20 +1986,20 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 {STUDIO_PROJECTS.map((proj) => (
                   <div
                     key={proj.route}
-                    className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] flex flex-col justify-between shadow-sm"
+                    className="p-5 rounded-2xl bg-[#151515] border border-[#303030] flex flex-col justify-between shadow-sm"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C6FF00]/15 text-[#C6FF00] border border-[#C6FF00]/30">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FF8A3D]/15 text-[#FF8A3D] border border-[#FF8A3D]/30">
                           {proj.tag}
                         </span>
-                        <span className="text-[10px] text-[#A1A1AA]">{proj.category}</span>
+                        <span className="text-[10px] text-[#A6A09A]">{proj.category}</span>
                       </div>
 
-                      <h3 className="text-base font-bold text-[#F5F5F0] mb-1.5">
+                      <h3 className="text-base font-bold text-[#F5F1EB] mb-1.5">
                         {proj.title}
                       </h3>
-                      <p className="text-xs text-[#A1A1AA] leading-relaxed mb-4">
+                      <p className="text-xs text-[#A6A09A] leading-relaxed mb-4">
                         {proj.description}
                       </p>
                     </div>
@@ -1371,7 +2007,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                     <button
                       type="button"
                       onClick={() => onNavigate(proj.route)}
-                      className="w-full py-2.5 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] border border-[#2B2B2B] text-[#F5F5F0] hover:text-[#C6FF00] text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2.5 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] border border-[#303030] text-[#F5F1EB] hover:text-[#FF8A3D] text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>Inspect Live Study</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -1383,78 +2019,86 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
           )}
 
           {/* =========================================================================
-              VIEW E: SETTINGS & INFRASTRUCTURE TAB
+              VIEW H: SETTINGS & INTEGRATIONS TAB (Phase E, F, G)
              ========================================================================= */}
           {activeTab === 'settings' && (
             <div className="space-y-6 max-w-3xl font-mono text-xs">
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-wider text-[#F5F5F0]">
-                  System Infrastructure &amp; Security
+                <h2 className="text-sm font-bold uppercase tracking-wider text-[#F5F1EB]">
+                  Integrations &amp; Channel Status
                 </h2>
-                <p className="text-[#A1A1AA] mt-1">
-                  Active backend services, security boundaries, and authorization allowlists.
+                <p className="text-[#A6A09A] mt-1">
+                  Active server credentials, external APIs, and communication gateways.
                 </p>
               </div>
 
-              {/* Admin Identity Card */}
-              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3">
-                <h3 className="text-xs font-bold uppercase text-[#C6FF00] flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Authenticated Administrator</span>
-                </h3>
-                <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-2">
+              {/* Resend Email Status */}
+              <div className="p-5 rounded-2xl bg-[#151515] border border-[#303030] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-[#FF8A3D]" />
+                    <h3 className="text-xs font-bold uppercase text-[#F5F1EB]">Resend Email Delivery</h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    CONFIGURED &amp; ACTIVE
+                  </span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-1.5 text-[11px]">
                   <div className="flex justify-between">
-                    <span className="text-[#A1A1AA]">Email:</span>
-                    <span className="text-[#F5F5F0] font-bold">{adminUser?.email || 'northup4work@gmail.com'}</span>
+                    <span className="text-[#A6A09A]">Notification Recipient:</span>
+                    <span className="text-[#F5F1EB]">northup4work@gmail.com</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#A1A1AA]">Role:</span>
-                    <span className="text-[#C6FF00] uppercase font-bold">{adminUser?.role || 'superadmin'}</span>
+                    <span className="text-[#A6A09A]">Sender Address:</span>
+                    <span className="text-[#F5F1EB]">Northup Studio &lt;onboarding@resend.dev&gt;</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#A1A1AA]">Security Scheme:</span>
-                    <span className="text-[#F5F5F0]">Bearer JWT + Server-Side Allowlist</span>
+                    <span className="text-[#A6A09A]">HTML Template Style:</span>
+                    <span className="text-[#FF8A3D]">Dark Charcoal &amp; Brand Orange</span>
                   </div>
                 </div>
               </div>
 
-              {/* Connected Services */}
-              <div className="p-5 rounded-2xl bg-[#141414] border border-[#2B2B2B] space-y-3">
-                <h3 className="text-xs font-bold uppercase text-[#F5F5F0] flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#C6FF00]" />
-                  <span>Integrated Production Services</span>
-                </h3>
-
-                <div className="space-y-2.5">
-                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-[#F5F5F0]">Supabase Database &amp; Auth</p>
-                      <p className="text-[11px] text-[#A1A1AA]">Encrypted PostgreSQL with Row-Level Security (RLS)</p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      CONNECTED
-                    </span>
+              {/* WhatsApp Cloud API Status (Phase F) */}
+              <div className="p-5 rounded-2xl bg-[#151515] border border-[#303030] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-emerald-400" />
+                    <h3 className="text-xs font-bold uppercase text-[#F5F1EB]">WhatsApp Business Cloud API</h3>
                   </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    MANUAL FALLBACK ACTIVE
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#A6A09A] leading-relaxed">
+                  To enable direct automated WhatsApp delivery via Meta's Cloud API, configure these Vercel environment variables:
+                </p>
+                <div className="p-3.5 rounded-xl bg-[#101010] border border-[#303030] space-y-1 font-mono text-[11px] text-[#A6A09A]">
+                  <div>&bull; <code className="text-[#F5F1EB]">WHATSAPP_ACCESS_TOKEN</code> (Meta System User Token)</div>
+                  <div>&bull; <code className="text-[#F5F1EB]">WHATSAPP_PHONE_NUMBER_ID</code> (Business Phone ID)</div>
+                  <div>&bull; <code className="text-[#F5F1EB]">WHATSAPP_BUSINESS_ACCOUNT_ID</code> (Meta WABA ID)</div>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300">
+                  ✓ <strong>1-Click Fallback Ready:</strong> You can already send pre-filled WhatsApp messages to any client directly using the "Open in WhatsApp" button in the lead dossier.
+                </div>
+              </div>
 
-                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-[#F5F5F0]">Resend Email Automation</p>
-                      <p className="text-[11px] text-[#A1A1AA]">Admin alerts &amp; client acknowledgements</p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      ACTIVE
-                    </span>
+              {/* Google Meet & Calendar Status (Phase G) */}
+              <div className="p-5 rounded-2xl bg-[#151515] border border-[#303030] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-bold uppercase text-[#F5F1EB]">Google Calendar &amp; Meet</h3>
                   </div>
-
-                  <div className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-[#F5F5F0]">Vercel Serverless Functions</p>
-                      <p className="text-[11px] text-[#A1A1AA]">Node runtime API endpoints: /api/contact, /api/admin/*</p>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      DEPLOYED
-                    </span>
-                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                    MANUAL LINK ACTIVE
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#A6A09A] leading-relaxed">
+                  For automated calendar invite creation, provide Google OAuth credentials (<code className="text-[#F5F1EB]">GOOGLE_CLIENT_ID</code>, <code className="text-[#F5F1EB]">GOOGLE_CLIENT_SECRET</code>, <code className="text-[#F5F1EB]">GOOGLE_REFRESH_TOKEN</code>).
+                </p>
+                <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-[11px] text-sky-300">
+                  ✓ <strong>Instant Scheduling:</strong> You can schedule meetings with clients right now by pasting your personal Google Meet room link or using the default room generator.
                 </div>
               </div>
             </div>
@@ -1463,7 +2107,7 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
       </div>
 
       {/* =========================================================================
-          3. LEAD DETAIL SLIDE-OUT DRAWER
+          3. RIGHT-SIDE CONTEXTUAL CLIENT DETAIL DRAWER (Phase B & D)
          ========================================================================= */}
       <AnimatePresence>
         {selectedLead && (
@@ -1483,132 +2127,338 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                className="w-screen max-w-xl bg-[#141414] border-l border-[#2B2B2B] flex flex-col shadow-2xl text-[#F5F5F0] overflow-hidden"
+                className="w-screen max-w-xl bg-[#151515] border-l border-[#303030] flex flex-col shadow-2xl text-[#F5F1EB] overflow-hidden"
               >
                 {/* Drawer Header */}
-                <div className="p-6 border-b border-[#2B2B2B] flex items-center justify-between bg-[#111111]">
+                <div className="p-6 border-b border-[#303030] flex items-center justify-between bg-[#121212]">
                   <div>
-                    <span className="text-[10px] font-bold tracking-widest text-[#C6FF00] uppercase">
-                      ENQUIRY DOSSIER
+                    <span className="text-[10px] font-bold tracking-widest text-[#FF8A3D] uppercase">
+                      CLIENT DOSSIER
                     </span>
-                    <h2 className="text-lg font-bold text-[#F5F5F0] mt-0.5 truncate max-w-xs sm:max-w-md">
+                    <h2 className="text-lg font-bold text-[#F5F1EB] mt-0.5 truncate max-w-xs sm:max-w-md">
                       {selectedLead.name}
                     </h2>
+                    {selectedLead.company && (
+                      <p className="text-xs text-[#A6A09A]">{selectedLead.company}</p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <a
-                      href={`mailto:${selectedLead.email}?subject=Regarding%20Your%20Project%20Enquiry%20%7C%20Northup%20Studio`}
-                      className="px-3 py-1.5 rounded-xl bg-[#C6FF00] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#b4ea00] transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => openCommunicationModal('discovery_invitation')}
+                      className="px-3 py-1.5 rounded-xl bg-[#FF8A3D] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#E96D24] transition-colors"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>Email Client</span>
-                    </a>
+                      <span>Send Client Message</span>
+                    </button>
 
                     <button
                       type="button"
                       onClick={() => setSelectedLead(null)}
-                      className="p-2 rounded-xl bg-[#1C1C1C] hover:bg-[#252525] text-[#A1A1AA] hover:text-[#F5F5F0]"
+                      className="p-2 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] text-[#A6A09A] hover:text-[#F5F1EB]"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Drawer Content */}
+                {/* Drawer Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
-                  {/* Status Lifecycle Selector */}
-                  <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B]">
+                  {/* Phase D: Client Quick Actions Hub */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[#A1A1AA] font-bold uppercase tracking-wider text-[11px]">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF8A3D] flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Client Actions Hub</span>
+                      </span>
+                      <span className="text-[10px] text-[#A6A09A]">Email &amp; WhatsApp</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openCommunicationModal('personal_welcome')}
+                        className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-[#FF8A3D]/40 transition-colors"
+                      >
+                        <div className="font-bold text-[#F5F1EB]">Welcome</div>
+                        <div className="text-[10px] text-[#A6A09A]">Intro email</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProposalTitle(`${selectedLead.service || 'Web Platform'} Proposal`)
+                          setProposalOverview(`Bespoke architecture and development for ${selectedLead.company || selectedLead.name}.`)
+                          setProposalModalOpen(true)
+                        }}
+                        className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-[#FF8A3D]/40 transition-colors"
+                      >
+                        <div className="font-bold text-[#F5F1EB]">Proposal</div>
+                        <div className="text-[10px] text-[#A6A09A]">Draft &amp; send</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setMeetingModalOpen(true)}
+                        className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-[#FF8A3D]/40 transition-colors"
+                      >
+                        <div className="font-bold text-[#F5F1EB]">Schedule</div>
+                        <div className="text-[10px] text-[#A6A09A]">Google Meet</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openCommunicationModal('polite_followup')}
+                        className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-[#FF8A3D]/40 transition-colors"
+                      >
+                        <div className="font-bold text-[#F5F1EB]">Follow-up</div>
+                        <div className="text-[10px] text-[#A6A09A]">Check in</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openCommunicationModal('project_accepted')}
+                        className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-[#FF8A3D]/40 transition-colors"
+                      >
+                        <div className="font-bold text-[#F5F1EB]">Onboard</div>
+                        <div className="text-[10px] text-[#A6A09A]">Next steps</div>
+                      </button>
+
+                      {selectedLead.phone ? (
+                        <a
+                          href={`https://wa.me/${selectedLead.phone.replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(selectedLead.name)},%20reaching%20out%20from%20Northup%20Studio%20regarding%20your%20project.`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-emerald-500/40 transition-colors block"
+                        >
+                          <div className="font-bold text-emerald-400">WhatsApp</div>
+                          <div className="text-[10px] text-[#A6A09A]">Open chat ↗</div>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const p = prompt('Enter WhatsApp phone number with country code (e.g. +14155552671):')
+                            if (p) {
+                              updateLeadCRM(selectedLead.id, { phone: p })
+                              setSelectedLead((prev) => ({ ...prev, phone: p }))
+                              showNotification('Phone saved.')
+                            }
+                          }}
+                          className="p-2.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-left hover:border-emerald-500/40 transition-colors"
+                        >
+                          <div className="font-bold text-[#A6A09A]">+ Add Phone</div>
+                          <div className="text-[10px] text-[#A6A09A]">For WhatsApp</div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stage Selector */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[#A6A09A] font-bold uppercase tracking-wider text-[11px]">
                         Pipeline Stage:
                       </span>
                       {getStatusBadge(selectedLead.status)}
                     </div>
 
-                    <div className="mt-3 grid grid-cols-3 gap-1.5">
-                      {['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost'].map((st) => (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                      {['new', 'contacted', 'qualified', 'proposal_sent', 'negotiation', 'won', 'lost'].map((st) => (
                         <button
                           key={st}
                           type="button"
                           onClick={() => handleStatusChange(selectedLead.id, st)}
                           className={`py-1.5 px-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors border ${
                             selectedLead.status === st
-                              ? 'bg-[#C6FF00] text-black border-[#C6FF00]'
-                              : 'bg-[#141414] text-[#A1A1AA] border-[#2B2B2B] hover:text-[#F5F5F0]'
+                              ? 'bg-[#FF8A3D] text-black border-[#FF8A3D]'
+                              : 'bg-[#151515] text-[#A6A09A] border-[#303030] hover:text-[#F5F1EB]'
                           }`}
                         >
                           {st.replace('_', ' ')}
                         </button>
                       ))}
                     </div>
+
+                    {/* Convert Won Lead to Client button */}
+                    {selectedLead.status === 'won' && !selectedLead.converted_at && (
+                      <div className="mt-3 pt-3 border-t border-[#303030]">
+                        <button
+                          type="button"
+                          onClick={() => handleConvertLeadToClient(selectedLead)}
+                          className="w-full py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold flex items-center justify-center gap-2"
+                        >
+                          <UserCheck className="w-4 h-4" />
+                          <span>Convert to Active Client Engagement</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Next Follow-up Date */}
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] flex items-center justify-between">
+                    <div>
+                      <span className="text-[#A6A09A] text-[11px]">Scheduled Follow-up:</span>
+                      <p className="font-bold text-[#F5F1EB]">
+                        {selectedLead.next_follow_up_date ? formatDate(selectedLead.next_follow_up_date) : 'No follow-up set'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {editingFollowUp ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="date"
+                            value={followUpInput}
+                            onChange={(e) => setFollowUpInput(e.target.value)}
+                            className="bg-[#151515] border border-[#303030] text-[#F5F1EB] p-1.5 rounded-lg text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveFollowUpDate}
+                            className="px-2 py-1.5 rounded-lg bg-[#FF8A3D] text-black font-bold text-xs"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEditingFollowUp(true)}
+                          className="px-3 py-1.5 rounded-lg bg-[#151515] hover:bg-[#252525] border border-[#303030] text-xs text-[#FF8A3D]"
+                        >
+                          {selectedLead.next_follow_up_date ? 'Reschedule' : 'Set Date'}
+                        </button>
+                      )}
+
+                      {selectedLead.next_follow_up_date && (
+                        <button
+                          type="button"
+                          onClick={handleToggleFollowUpCompleted}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold ${
+                            selectedLead.follow_up_completed
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : 'bg-[#151515] text-[#A6A09A] border-[#303030]'
+                          }`}
+                        >
+                          {selectedLead.follow_up_completed ? 'Completed ✓' : 'Mark Done'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Client Details Grid */}
-                  <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
-                      <span className="text-[#A1A1AA]">Work Email:</span>
+                  <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#303030]">
+                      <span className="text-[#A6A09A]">Work Email:</span>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[#F5F5F0] font-bold">{selectedLead.email}</span>
+                        <span className="text-[#F5F1EB] font-bold">{selectedLead.email}</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard(selectedLead.email)}
-                          className="p-1 rounded text-[#A1A1AA] hover:text-[#F5F5F0]"
+                          className="p-1 rounded text-[#A6A09A] hover:text-[#F5F1EB]"
                         >
                           <Copy className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
-                      <span className="text-[#A1A1AA]">Company / Brand:</span>
-                      <span className="text-[#F5F5F0] font-bold">{selectedLead.company || 'Individual / Non-disclosed'}</span>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#303030]">
+                      <span className="text-[#A6A09A]">Phone / WhatsApp:</span>
+                      <span className="text-[#F5F1EB] font-bold">{selectedLead.phone || 'Not supplied'}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
-                      <span className="text-[#A1A1AA]">Service Requested:</span>
-                      <span className="text-[#C6FF00] font-bold">{selectedLead.service || 'Web Platform'}</span>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#303030]">
+                      <span className="text-[#A6A09A]">Service Requested:</span>
+                      <span className="text-[#FF8A3D] font-bold">{selectedLead.service || 'Web Platform'}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
-                      <span className="text-[#A1A1AA]">Estimated Budget:</span>
-                      <span className="text-[#F5F5F0] font-bold">{selectedLead.budget || 'Flexible'}</span>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#303030]">
+                      <span className="text-[#A6A09A]">Estimated Budget:</span>
+                      <span className="text-[#F5F1EB] font-bold">{selectedLead.budget || 'Flexible'}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
-                      <span className="text-[#A1A1AA]">Desired Timeline:</span>
-                      <span className="text-[#F5F5F0] font-bold">{selectedLead.timeline || 'Flexible'}</span>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#303030]">
+                      <span className="text-[#A6A09A]">Desired Timeline:</span>
+                      <span className="text-[#F5F1EB] font-bold">{selectedLead.timeline || 'Flexible'}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-[#A1A1AA]">Received At:</span>
-                      <span className="text-[#A1A1AA]">{formatDate(selectedLead.created_at)}</span>
+                      <span className="text-[#A6A09A]">Received At:</span>
+                      <span className="text-[#A6A09A]">{formatDate(selectedLead.created_at)}</span>
                     </div>
                   </div>
 
-                  {/* Full Enquiry Message */}
+                  {/* Enquiry Message */}
                   <div>
-                    <h3 className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider mb-2">
-                      Client Project Scope &amp; Message:
+                    <h3 className="text-[11px] font-bold text-[#A6A09A] uppercase tracking-wider mb-2">
+                      Enquiry Scope &amp; Message:
                     </h3>
-                    <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-xs leading-relaxed text-[#F5F5F0] whitespace-pre-wrap">
+                    <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] text-xs leading-relaxed text-[#F5F1EB] whitespace-pre-wrap">
                       {selectedLead.project_description || 'No additional scope notes provided.'}
                     </div>
                   </div>
 
-                  {/* Internal Team Notes */}
-                  <div className="pt-2 border-t border-[#2B2B2B] space-y-4">
+                  {/* Communication History Timeline */}
+                  <div className="pt-2 border-t border-[#303030] space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-[11px] font-bold text-[#C6FF00] uppercase tracking-wider flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" />
+                      <h3 className="text-[11px] font-bold text-[#FF8A3D] uppercase tracking-wider flex items-center gap-1.5">
+                        <SendHorizontal className="w-3.5 h-3.5" />
+                        <span>Communication History</span>
+                      </h3>
+                      <span className="text-[10px] text-[#A6A09A]">
+                        {commLogs.length} events
+                      </span>
+                    </div>
+
+                    {isLoadingComm ? (
+                      <div className="py-4 text-center text-[#A6A09A]">
+                        <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#FF8A3D] mb-1" />
+                        Loading communication history...
+                      </div>
+                    ) : commLogs.length === 0 ? (
+                      <div className="p-3.5 rounded-xl bg-[#1D1D1D] border border-[#303030] text-center text-[#A6A09A] text-[11px]">
+                        No client communication dispatched yet. Use "Client Actions Hub" above to send initial outreach.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {commLogs.map((log) => (
+                          <div
+                            key={log.id}
+                            className="p-3 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-1"
+                          >
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="font-bold text-[#FF8A3D] uppercase">
+                                [{log.channel}] {log.subject || 'Message'}
+                              </span>
+                              <span className="text-[#A6A09A]">{formatDate(log.created_at)}</span>
+                            </div>
+                            <p className="text-[11px] text-[#D6D0C7] line-clamp-2 leading-relaxed">
+                              {log.content}
+                            </p>
+                            <div className="flex items-center justify-between pt-1 text-[10px] text-[#A6A09A]">
+                              <span>To: {log.recipient}</span>
+                              <span className="uppercase text-emerald-400 font-bold">{log.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Private Internal Notes */}
+                  <div className="pt-2 border-t border-[#303030] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[11px] font-bold text-[#F5F1EB] uppercase tracking-wider flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#FF8A3D]" />
                         <span>Private Internal Notes</span>
                       </h3>
-                      <span className="text-[10px] text-[#A1A1AA]">
+                      <span className="text-[10px] text-[#A6A09A]">
                         {notes.length} {notes.length === 1 ? 'note' : 'notes'}
                       </span>
                     </div>
 
-                    {/* New Note Form */}
                     <form onSubmit={handleCreateNote} className="space-y-2">
                       <textarea
                         rows={3}
@@ -1616,16 +2466,16 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
                         placeholder="Add private team notes, call takeaways, or deal scopes..."
-                        className="w-full p-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA] text-xs focus:outline-none transition-colors"
+                        className="w-full p-3 rounded-xl bg-[#1D1D1D] border border-[#303030] focus:border-[#FF8A3D] text-[#F5F1EB] placeholder-[#A6A09A] text-xs focus:outline-none transition-colors"
                       />
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#A1A1AA]">
+                        <span className="text-[10px] text-[#A6A09A]">
                           {newNote.length}/3000
                         </span>
                         <button
                           type="submit"
                           disabled={isAddingNote || !newNote.trim()}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#C6FF00] hover:bg-[#b4ea00] disabled:opacity-40 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg bg-[#FF8A3D] hover:bg-[#E96D24] disabled:opacity-40 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer"
                         >
                           {isAddingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                           <span>Add Note</span>
@@ -1633,14 +2483,13 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                       </div>
                     </form>
 
-                    {/* Notes List */}
                     {isLoadingNotes ? (
-                      <div className="py-6 text-center text-[#A1A1AA]">
-                        <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#C6FF00] mb-2" />
+                      <div className="py-6 text-center text-[#A6A09A]">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#FF8A3D] mb-2" />
                         Loading internal notes...
                       </div>
                     ) : notes.length === 0 ? (
-                      <div className="p-4 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] text-center text-[#A1A1AA] text-[11px]">
+                      <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] text-center text-[#A6A09A] text-[11px]">
                         No internal notes recorded yet.
                       </div>
                     ) : (
@@ -1648,9 +2497,9 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                         {notes.map((note) => (
                           <div
                             key={note.id}
-                            className="p-3.5 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] space-y-1.5"
+                            className="p-3.5 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-1.5"
                           >
-                            <div className="flex items-center justify-between text-[10px] text-[#A1A1AA]">
+                            <div className="flex items-center justify-between text-[10px] text-[#A6A09A]">
                               <span>{note.author_email}</span>
                               <div className="flex items-center gap-2">
                                 <span>{formatDate(note.created_at)}</span>
@@ -1663,8 +2512,8 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                                 </button>
                               </div>
                             </div>
-                            <p className="text-xs text-[#F5F5F0] whitespace-pre-wrap leading-relaxed">
-                              {note.note}
+                            <p className="text-xs text-[#F5F1EB] whitespace-pre-wrap leading-relaxed">
+                              {note.content || note.note}
                             </p>
                           </div>
                         ))}
@@ -1674,6 +2523,522 @@ export default function AdminDashboard({ adminUser, onLogout, onNavigate }) {
                 </div>
               </motion.div>
             </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          4. CLIENT COMMUNICATION & TEMPLATE MODAL (Phase D & E & F)
+         ========================================================================= */}
+      <AnimatePresence>
+        {commModalOpen && selectedLead && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-mono">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCommModalOpen(false)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-[#151515] border border-[#303030] rounded-2xl p-6 sm:p-8 shadow-2xl z-10 space-y-5 text-xs max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-[#303030] pb-4">
+                <div>
+                  <span className="text-[10px] font-bold text-[#FF8A3D] uppercase tracking-wider">
+                    ONE-CLICK COMMUNICATION
+                  </span>
+                  <h3 className="text-base font-bold text-[#F5F1EB]">
+                    Message to {selectedLead.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCommModalOpen(false)}
+                  className="p-1.5 rounded-lg text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Template Selector */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#A6A09A] uppercase mb-1.5">
+                  Select Template:
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedTemplateKey}
+                    onChange={(e) => handleTemplateSelectionChange(e.target.value)}
+                    className="w-full appearance-none bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2.5 rounded-xl text-xs focus:border-[#FF8A3D] focus:outline-none"
+                  >
+                    {templatesList.map((t) => (
+                      <option key={t.key} value={t.key}>
+                        [{t.category}] {t.title}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-[#A6A09A] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Channel Toggle */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#A6A09A] uppercase mb-1.5">
+                  Delivery Channel:
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCommChannel('email')
+                      handleTemplateSelectionChange(selectedTemplateKey)
+                    }}
+                    className={`flex-1 py-2 rounded-xl border flex items-center justify-center gap-2 font-bold ${
+                      commChannel === 'email'
+                        ? 'bg-[#FF8A3D] text-black border-[#FF8A3D]'
+                        : 'bg-[#1D1D1D] text-[#A6A09A] border-[#303030]'
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Branded Email</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCommChannel('whatsapp')
+                      handleTemplateSelectionChange(selectedTemplateKey)
+                    }}
+                    className={`flex-1 py-2 rounded-xl border flex items-center justify-center gap-2 font-bold ${
+                      commChannel === 'whatsapp'
+                        ? 'bg-emerald-500 text-black border-emerald-500'
+                        : 'bg-[#1D1D1D] text-[#A6A09A] border-[#303030]'
+                    }`}
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Recipient Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Recipient Email:</label>
+                  <input
+                    type="email"
+                    value={commRecipientEmail}
+                    onChange={(e) => setCommRecipientEmail(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Recipient Phone (WhatsApp):</label>
+                  <input
+                    type="text"
+                    placeholder="+14155552671"
+                    value={commRecipientPhone}
+                    onChange={(e) => setCommRecipientPhone(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Subject (for Email) */}
+              {commChannel !== 'whatsapp' && (
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Subject Line:</label>
+                  <input
+                    type="text"
+                    value={commSubject}
+                    onChange={(e) => setCommSubject(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Editable Message Content */}
+              <div>
+                <label className="block text-[10px] text-[#A6A09A] mb-1">Personalized Message Content:</label>
+                <textarea
+                  rows={6}
+                  value={commContent}
+                  onChange={(e) => setCommContent(e.target.value)}
+                  className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-3 rounded-xl text-xs leading-relaxed focus:border-[#FF8A3D] focus:outline-none"
+                />
+              </div>
+
+              {/* Final Confirmation Banner */}
+              <div className="p-3.5 rounded-xl bg-[#1D1D1D] border border-[#303030] text-[11px] text-[#A6A09A] space-y-1">
+                <div>Recipient: <strong className="text-[#F5F1EB]">{commChannel === 'whatsapp' ? commRecipientPhone || 'No phone set' : commRecipientEmail}</strong></div>
+                <div>Provider: <strong className="text-[#FF8A3D]">{commChannel === 'whatsapp' ? 'WhatsApp Cloud API / 1-Click Fallback' : 'Resend Transactional Engine'}</strong></div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#303030]">
+                <button
+                  type="button"
+                  onClick={() => setCommModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] text-[#A6A09A] hover:text-[#F5F1EB]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSendingComm}
+                  onClick={handleSendCommunication}
+                  className="px-5 py-2.5 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSendingComm ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <span>Confirm &amp; Send Message</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          5. PROPOSAL BUILDER MODAL (Phase H)
+         ========================================================================= */}
+      <AnimatePresence>
+        {proposalModalOpen && selectedLead && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-mono">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setProposalModalOpen(false)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-3xl bg-[#151515] border border-[#303030] rounded-2xl p-6 sm:p-8 shadow-2xl z-10 space-y-5 text-xs max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-[#303030] pb-4">
+                <div>
+                  <span className="text-[10px] font-bold text-[#FF8A3D] uppercase tracking-wider">
+                    BESPOKE PROPOSAL BUILDER
+                  </span>
+                  <h3 className="text-base font-bold text-[#F5F1EB]">
+                    Draft Scope Document for {selectedLead.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProposalModalOpen(false)}
+                  className="p-1.5 rounded-lg text-[#A6A09A] hover:text-[#F5F1EB] hover:bg-[#1D1D1D]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateProposalSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Proposal Title:</label>
+                  <input
+                    type="text"
+                    required
+                    value={proposalTitle}
+                    onChange={(e) => setProposalTitle(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2.5 rounded-xl text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Executive Scope &amp; Overview:</label>
+                  <textarea
+                    rows={3}
+                    value={proposalOverview}
+                    onChange={(e) => setProposalOverview(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2.5 rounded-xl text-xs"
+                  />
+                </div>
+
+                {/* Line Items */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#A6A09A] uppercase">
+                      Itemized Scope &amp; Pricing:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setProposalLineItems([...proposalLineItems, { description: 'Additional Scope', amount: 1000 }])}
+                      className="text-[#FF8A3D] hover:underline text-[10px]"
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+
+                  {proposalLineItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => {
+                          const updated = [...proposalLineItems]
+                          updated[idx].description = e.target.value
+                          setProposalLineItems(updated)
+                        }}
+                        className="flex-1 bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                      />
+                      <input
+                        type="number"
+                        value={item.amount}
+                        onChange={(e) => {
+                          const updated = [...proposalLineItems]
+                          updated[idx].amount = Number(e.target.value)
+                          setProposalLineItems(updated)
+                        }}
+                        className="w-24 bg-[#1D1D1D] border border-[#303030] text-[#FF8A3D] font-bold p-2 rounded-lg text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setProposalLineItems(proposalLineItems.filter((_, i) => i !== idx))}
+                        className="p-1.5 rounded text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="p-3 rounded-xl bg-[#101010] border border-[#303030] flex justify-between font-bold text-xs">
+                    <span>Total Investment:</span>
+                    <span className="text-[#FF8A3D]">
+                      ${proposalLineItems.reduce((acc, i) => acc + (Number(i.amount) || 0), 0)} {proposalCurrency}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Payment Schedule &amp; Terms:</label>
+                  <input
+                    type="text"
+                    value={proposalTerms}
+                    onChange={(e) => setProposalTerms(e.target.value)}
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#303030]">
+                  <button
+                    type="button"
+                    onClick={() => setProposalModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-[#1D1D1D] hover:bg-[#252525] text-[#A6A09A] hover:text-[#F5F1EB]"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isCreatingProposal}
+                    className="px-5 py-2.5 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold flex items-center gap-2 cursor-pointer"
+                  >
+                    {isCreatingProposal ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCheck className="w-4 h-4" />}
+                    <span>Save &amp; Generate Proposal</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          6. DISCOVERY MEETING SCHEDULER MODAL (Phase G)
+         ========================================================================= */}
+      <AnimatePresence>
+        {meetingModalOpen && selectedLead && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-mono">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMeetingModalOpen(false)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-lg bg-[#151515] border border-[#303030] rounded-2xl p-6 sm:p-8 shadow-2xl z-10 space-y-4 text-xs"
+            >
+              <div className="flex items-center justify-between border-b border-[#303030] pb-3">
+                <div>
+                  <span className="text-[10px] font-bold text-[#FF8A3D] uppercase">
+                    GOOGLE MEET &amp; CALENDAR SCHEDULER
+                  </span>
+                  <h3 className="text-base font-bold text-[#F5F1EB]">
+                    Schedule Consultation with {selectedLead.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMeetingModalOpen(false)}
+                  className="p-1 rounded text-[#A6A09A] hover:text-[#F5F1EB]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleMeetingSubmit} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-[#A6A09A] mb-1">Date:</label>
+                    <input
+                      type="date"
+                      required
+                      value={meetingDate}
+                      onChange={(e) => setMeetingDate(e.target.value)}
+                      className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-[#A6A09A] mb-1">Time (UTC):</label>
+                    <input
+                      type="time"
+                      required
+                      value={meetingTime}
+                      onChange={(e) => setMeetingTime(e.target.value)}
+                      className="w-full bg-[#1D1D1D] border border-[#303030] text-[#F5F1EB] p-2 rounded-lg text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-[#A6A09A] mb-1">Google Meet / Video Conference URL:</label>
+                  <input
+                    type="url"
+                    value={manualMeetLink}
+                    onChange={(e) => setManualMeetLink(e.target.value)}
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    className="w-full bg-[#1D1D1D] border border-[#303030] text-[#FF8A3D] p-2 rounded-lg text-xs"
+                  />
+                  <p className="text-[10px] text-[#A6A09A] mt-1">
+                    Paste your personal Google Meet room link or keep default to generate on the fly.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#303030]">
+                  <button
+                    type="button"
+                    onClick={() => setMeetingModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-[#1D1D1D] text-[#A6A09A] hover:text-[#F5F1EB]"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSchedulingMeeting}
+                    className="px-5 py-2.5 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-bold flex items-center gap-1.5"
+                  >
+                    {isSchedulingMeeting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                    <span>Confirm &amp; Log Meeting</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          7. PROPOSAL PREVIEW MODAL
+         ========================================================================= */}
+      <AnimatePresence>
+        {selectedProposalToView && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-mono">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedProposalToView(null)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-[#151515] border border-[#303030] rounded-2xl p-6 sm:p-8 shadow-2xl z-10 space-y-5 text-xs max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-[#303030] pb-4">
+                <div>
+                  <span className="text-[10px] font-bold text-[#FF8A3D] uppercase">
+                    PROPOSAL DOCUMENT #{selectedProposalToView.proposal_number}
+                  </span>
+                  <h3 className="text-base font-bold text-[#F5F1EB] mt-0.5">
+                    {selectedProposalToView.title}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProposalToView(null)}
+                  className="p-1 rounded text-[#A6A09A] hover:text-[#F5F1EB]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#1D1D1D] border border-[#303030] space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-[#A6A09A]">Client Name:</span>
+                  <span className="text-[#F5F1EB] font-bold">{selectedProposalToView.client_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#A6A09A]">Client Email:</span>
+                  <span className="text-[#F5F1EB]">{selectedProposalToView.client_email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#A6A09A]">Status:</span>
+                  <span className="text-[#FF8A3D] uppercase font-bold">{selectedProposalToView.status}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#A6A09A]">Investment Total:</span>
+                  <span className="text-[#FF8A3D] font-bold text-sm">${selectedProposalToView.total_amount} {selectedProposalToView.currency}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[11px] font-bold text-[#A6A09A] uppercase mb-1.5">Scope Overview:</h4>
+                <p className="p-3 rounded-xl bg-[#101010] border border-[#303030] text-[#F5F1EB] leading-relaxed">
+                  {selectedProposalToView.project_overview || 'Bespoke design direction and full-stack engineering.'}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-[11px] font-bold text-[#A6A09A] uppercase mb-1.5">Itemized Deliverables:</h4>
+                <div className="space-y-1.5">
+                  {(selectedProposalToView.deliverables || []).map((del, i) => (
+                    <div key={i} className="p-2 rounded-lg bg-[#101010] border border-[#303030] flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#FF8A3D]" />
+                      <span className="text-[#F5F1EB]">{del}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#303030] flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProposalToView(null)}
+                  className="px-4 py-2 rounded-xl bg-[#1D1D1D] text-[#A6A09A] hover:text-[#F5F1EB]"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

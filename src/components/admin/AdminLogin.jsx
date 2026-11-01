@@ -52,22 +52,22 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0B0B0B] text-[#F5F5F0] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden select-none font-sans">
+    <div className="min-h-screen w-full bg-[#0C0C0C] text-[#F5F1EB] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden select-none font-sans">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-[#C6FF00]/5 blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-[#FF8A3D]/5 blur-[140px] pointer-events-none" />
 
       {/* Back to Site Button */}
       <div className="w-full max-w-md mb-6 flex justify-between items-center z-10 font-mono">
         <button
           type="button"
           onClick={() => onNavigate('/')}
-          className="inline-flex items-center gap-2 text-xs text-[#A1A1AA] hover:text-[#F5F5F0] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs text-[#A6A09A] hover:text-[#F5F1EB] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Portfolio Website</span>
         </button>
 
-        <span className="text-[11px] uppercase tracking-widest text-[#C6FF00] font-bold">
+        <span className="text-[11px] uppercase tracking-widest text-[#FF8A3D] font-bold">
           CRM Console
         </span>
       </div>
@@ -77,18 +77,18 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="w-full max-w-md bg-[#141414] border border-[#2B2B2B] rounded-2xl p-8 sm:p-10 shadow-2xl relative z-10"
+        className="w-full max-w-md bg-[#151515] border border-[#303030] rounded-2xl p-8 sm:p-10 shadow-2xl relative z-10 backdrop-blur-xl"
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#C6FF00]/15 border border-[#C6FF00]/30 text-[#C6FF00] mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FF8A3D]/15 border border-[#FF8A3D]/30 text-[#FF8A3D] mb-4">
             <ShieldCheck className="w-6 h-6" />
           </div>
-          <h1 className="font-bold text-2xl uppercase tracking-wider text-[#F5F5F0] font-mono">
+          <h1 className="font-bold text-2xl uppercase tracking-wider text-[#F5F1EB] font-mono">
             ADMIN SIGN IN
           </h1>
-          <p className="font-mono text-xs text-[#A1A1AA] mt-1.5">
-            Internal operations dashboard for Northup Studio project leads.
+          <p className="font-mono text-xs text-[#A6A09A] mt-1.5">
+            Internal operations dashboard for Northup Studio client enquiries.
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
         <form onSubmit={handleLogin} className="space-y-4 font-mono">
           {/* Email */}
           <div>
-            <label className="block text-xs font-medium text-[#A1A1AA] mb-2">
+            <label className="block text-xs font-medium text-[#A6A09A] mb-2">
               Admin Work Email
             </label>
             <div className="relative">
@@ -129,18 +129,18 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
                 type="email"
                 required
                 disabled={isSubmitting || !isSupabaseConfigured}
-                placeholder="admin@northupstudio.com"
+                placeholder="northup4work@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA]/50 text-sm focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#1D1D1D] border border-[#303030] focus:border-[#FF8A3D] text-[#F5F1EB] placeholder-[#A6A09A]/50 text-sm focus:outline-none transition-colors"
               />
-              <Mail className="w-4 h-4 text-[#A1A1AA] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Mail className="w-4 h-4 text-[#A6A09A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-medium text-[#A1A1AA] mb-2">
+            <label className="block text-xs font-medium text-[#A6A09A] mb-2">
               Password
             </label>
             <div className="relative">
@@ -151,13 +151,13 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-11 py-3 rounded-xl bg-[#1C1C1C] border border-[#2B2B2B] focus:border-[#C6FF00] text-[#F5F5F0] placeholder-[#A1A1AA]/50 text-sm focus:outline-none transition-colors"
+                className="w-full pl-10 pr-11 py-3 rounded-xl bg-[#1D1D1D] border border-[#303030] focus:border-[#FF8A3D] text-[#F5F1EB] placeholder-[#A6A09A]/50 text-sm focus:outline-none transition-colors"
               />
-              <Lock className="w-4 h-4 text-[#A1A1AA] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Lock className="w-4 h-4 text-[#A6A09A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#F5F5F0] transition-colors cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A6A09A] hover:text-[#F5F1EB] transition-colors cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -169,7 +169,7 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
             <button
               type="submit"
               disabled={isSubmitting || !isSupabaseConfigured}
-              className="w-full py-3.5 rounded-xl bg-[#C6FF00] hover:bg-[#b4ea00] text-black font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full py-3.5 rounded-xl bg-[#FF8A3D] hover:bg-[#E96D24] text-black font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -184,8 +184,8 @@ export default function AdminLogin({ onLoginSuccess, onNavigate }) {
         </form>
 
         {/* Footer info note */}
-        <div className="mt-8 pt-6 border-t border-[#2B2B2B] text-center font-mono">
-          <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
+        <div className="mt-8 pt-6 border-t border-[#303030] text-center font-mono">
+          <p className="text-[11px] text-[#A6A09A] leading-relaxed">
             Access restricted to authorized personnel. Row Level Security active.
           </p>
         </div>
