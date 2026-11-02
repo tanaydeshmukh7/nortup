@@ -64,9 +64,84 @@ const SEO_PAGES = {
     category: 'Streetwear Digital Storefront & Lookbook',
     caseStudyDate: '2026-11-01',
   },
+  '/services/web-design-development': {
+    canonical: `${BASE_PRODUCTION_URL}/services/web-design-development`,
+    title: 'Web Design & Development | Custom Digital Experiences | Northup Studio',
+    description:
+      'Bespoke website design and high-performance digital engineering. React, Next.js, kinetic micro-interactions, sub-second load speeds, and technical SEO by Northup Studio.',
+    ogImage: `${BASE_PRODUCTION_URL}/og-image.png`,
+    ogType: 'website',
+    ogImageAlt: 'Web Design & Development Services by Northup Studio',
+    isService: true,
+    serviceName: 'Custom Web Design & High-Performance Web Development',
+    serviceType: 'Web Design & Web Development',
+  },
+  '/services/brand-identity-design': {
+    canonical: `${BASE_PRODUCTION_URL}/services/brand-identity-design`,
+    title: 'Brand Identity Design | Strategic Visual Systems | Northup Studio',
+    description:
+      'Strategic brand identity design and visual systems by Northup Studio. Bespoke logotypes, curated typography hierarchies, color architectures, and comprehensive brand books.',
+    ogImage: `${BASE_PRODUCTION_URL}/og-image.png`,
+    ogType: 'website',
+    ogImageAlt: 'Brand Identity Design & Visual Systems by Northup Studio',
+    isService: true,
+    serviceName: 'Strategic Brand Identity & Digital Visual Systems',
+    serviceType: 'Brand Identity Design & Art Direction',
+  },
 };
 
 function getJsonLd(page) {
+  if (page.isService) {
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Service',
+          '@id': `${page.canonical}#service`,
+          name: page.serviceName,
+          headline: page.title,
+          description: page.description,
+          url: page.canonical,
+          provider: {
+            '@type': 'Organization',
+            name: 'Northup Studio',
+            url: `${BASE_PRODUCTION_URL}/`,
+            logo: {
+              '@type': 'ImageObject',
+              url: `${BASE_PRODUCTION_URL}/assets/logo.png`,
+            },
+          },
+          serviceType: page.serviceType,
+          areaServed: 'Worldwide',
+        },
+        {
+          '@type': 'BreadcrumbList',
+          '@id': `${page.canonical}#breadcrumb`,
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: `${BASE_PRODUCTION_URL}/`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Services',
+              item: `${BASE_PRODUCTION_URL}/#services`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: page.serviceName,
+              item: page.canonical,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   return {
     '@context': 'https://schema.org',
     '@graph': [

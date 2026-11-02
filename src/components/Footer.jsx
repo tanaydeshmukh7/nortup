@@ -163,17 +163,16 @@ export default function Footer({ onOpenContact, onOpenPrivacy, onNavigate }) {
         */}
         <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 lg:gap-12 mb-10 sm:mb-14">
           
-          {/* Column 1: STUDIO */}
+          {/* Column 1: SERVICES */}
           <div className="flex flex-col items-start gap-3">
             <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
-              STUDIO
+              SERVICES
             </h4>
             <ul className="space-y-2">
               {[
-                { name: 'Home', href: '/' },
-                { name: 'Work', href: '/#work' },
-                { name: 'Services', href: '/#services' },
-                { name: 'About Us', href: '/#about' },
+                { name: 'Web Design & Dev', href: '/services/web-design-development' },
+                { name: 'Brand Identity', href: '/services/brand-identity-design' },
+                { name: 'All Services', href: '/#services' },
               ].map((item, idx) => (
                 <li key={idx}>
                   <a 
@@ -236,16 +235,17 @@ export default function Footer({ onOpenContact, onOpenPrivacy, onNavigate }) {
             </ul>
           </div>
 
-          {/* Column 3: INFORMATION */}
+          {/* Column 3: STUDIO & LEGAL */}
           <div className="flex flex-col items-start gap-3">
             <h4 className="font-mono text-[11px] sm:text-[12px] font-bold text-[#FF8738] tracking-widest uppercase mb-1">
-              INFORMATION
+              STUDIO &amp; LEGAL
             </h4>
             <ul className="space-y-2">
               {[
-                { name: 'Licenses and Agreement', href: '#' },
+                { name: 'Home', href: '/' },
+                { name: 'Work', href: '/#work' },
+                { name: 'About Us', href: '/#about' },
                 { name: 'Privacy Policy', href: '#' },
-                { name: 'Cookie Settings', href: '#' },
               ].map((item, idx) => (
                 <li key={idx}>
                   <a 
@@ -254,6 +254,9 @@ export default function Footer({ onOpenContact, onOpenPrivacy, onNavigate }) {
                       if (item.name === 'Privacy Policy' && onOpenPrivacy) {
                         e.preventDefault()
                         onOpenPrivacy()
+                      } else if (onNavigate && (item.href.startsWith('/') || item.href.startsWith('#'))) {
+                        e.preventDefault()
+                        onNavigate(item.href)
                       }
                     }}
                     data-cursor="hover" 

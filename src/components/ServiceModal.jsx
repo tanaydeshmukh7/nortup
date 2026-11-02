@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle2, Clock, Sparkles, ArrowUpRight, ShieldCheck, Zap } from 'lucide-react'
 
-export default function ServiceModal({ isOpen, onClose, service, onInquire }) {
+export default function ServiceModal({ isOpen, onClose, service, onInquire, onNavigate }) {
   // Lock body scroll while modal is active
   useEffect(() => {
     if (!isOpen) return
@@ -121,6 +121,26 @@ export default function ServiceModal({ isOpen, onClose, service, onInquire }) {
               )}
             </div>
           </div>
+
+          {/* Deep-Dive Landing Page Link if Available */}
+          {service.slugRoute && (
+            <div className="mb-4 text-center">
+              <a
+                href={service.slugRoute}
+                onClick={(e) => {
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onClose()
+                    onNavigate(service.slugRoute)
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 font-mono text-xs text-[#FF8A3D] hover:underline"
+              >
+                <span>Read Comprehensive {service.title} Specifications &amp; FAQs</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
 
           {/* Action Row */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">

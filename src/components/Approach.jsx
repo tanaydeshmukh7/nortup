@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, CheckCircle2, ChevronDown, Sparkles } from 'lucide-react'
 import ServiceModal from './ServiceModal'
 
-export default function Approach({ onOpenContact }) {
+export default function Approach({ onOpenContact, onNavigate }) {
   const shouldReduceMotion = useReducedMotion()
 
   // Desktop active hovered/pinned card state
@@ -35,6 +35,7 @@ export default function Approach({ onOpenContact }) {
         "Typography Curation"
       ],
       timeline: "2-3 Weeks",
+      slugRoute: "/services/brand-identity-design",
       outcomes: "Enduring visual authority, unified brand language across digital and print touchpoints."
     },
     {
@@ -52,6 +53,7 @@ export default function Approach({ onOpenContact }) {
         "Performance & SEO Tuning"
       ],
       timeline: "3-5 Weeks",
+      slugRoute: "/services/web-design-development",
       outcomes: "Lightning-fast performance, award-winning aesthetics, and seamless user conversion flows."
     },
     {
@@ -374,18 +376,36 @@ export default function Approach({ onOpenContact }) {
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDetailModalService(service)
-                        }}
-                        data-cursor="hover"
-                        title="View complete specifications and turnaround"
-                        className="py-2 px-3 rounded-xl font-mono text-[11px] lg:text-[12px] font-medium uppercase tracking-wider transition-colors duration-200 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10"
-                      >
-                        Specs
-                      </button>
+                      {service.slugRoute ? (
+                        <a
+                          href={service.slugRoute}
+                          onClick={(e) => {
+                            if (onNavigate) {
+                              e.preventDefault()
+                              onNavigate(service.slugRoute)
+                            }
+                          }}
+                          data-cursor="hover"
+                          title="View complete specifications and case studies"
+                          className="py-2 px-3 rounded-xl font-mono text-[11px] lg:text-[12px] font-medium uppercase tracking-wider transition-colors duration-200 bg-white/5 hover:bg-white/10 text-[#FF8A3D] hover:text-white border border-[#FF8A3D]/30 inline-flex items-center gap-1"
+                        >
+                          <span>Guide</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDetailModalService(service)
+                          }}
+                          data-cursor="hover"
+                          title="View complete specifications and turnaround"
+                          className="py-2 px-3 rounded-xl font-mono text-[11px] lg:text-[12px] font-medium uppercase tracking-wider transition-colors duration-200 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10"
+                        >
+                          Specs
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -516,12 +536,28 @@ export default function Approach({ onOpenContact }) {
                               <ArrowUpRight className="w-3.5 h-3.5" />
                             </button>
 
+                            {service.slugRoute && (
+                              <a
+                                href={service.slugRoute}
+                                onClick={(e) => {
+                                  if (onNavigate) {
+                                    e.preventDefault()
+                                    onNavigate(service.slugRoute)
+                                  }
+                                }}
+                                className="w-full py-2.5 px-3 rounded-xl font-mono text-[11px] font-bold uppercase tracking-wider text-center text-[#FF8A3D] hover:text-white bg-[#FF4D0A]/10 border border-[#FF4D0A]/30 flex items-center justify-center gap-1.5 transition-colors"
+                              >
+                                <span>Read {service.title} Page</span>
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => setDetailModalService(service)}
                               className="w-full py-2 px-3 rounded-xl font-mono text-[11px] uppercase tracking-wider text-center text-white/60 hover:text-white bg-white/5 border border-white/10"
                             >
-                              View Full Specifications
+                              View Quick Specs
                             </button>
                           </div>
                         </div>
@@ -773,6 +809,7 @@ export default function Approach({ onOpenContact }) {
         onClose={() => setDetailModalService(null)}
         service={detailModalService}
         onInquire={onOpenContact}
+        onNavigate={onNavigate}
       />
 
     </section>

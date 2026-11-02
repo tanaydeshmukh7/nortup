@@ -17,6 +17,8 @@ import AtelierCaseStudy from './pages/AtelierCaseStudy'
 import MaisonCaseStudy from './pages/MaisonCaseStudy'
 import AurexCaseStudy from './pages/AurexCaseStudy'
 import DropCultCaseStudy from './pages/DropCultCaseStudy'
+import WebDesignService from './pages/WebDesignService'
+import BrandIdentityService from './pages/BrandIdentityService'
 import AdminView from './components/admin/AdminView'
 
 export default function App() {
@@ -33,12 +35,16 @@ export default function App() {
       if (path === '/work/maison-de-sucre') return path
       if (path === '/work/aurex-performance-club') return path
       if (path === '/work/drop-cult') return path
+      if (path === '/services/web-design-development') return path
+      if (path === '/services/brand-identity-design') return path
       if (path === '/admin') return path
       if (window.location.hash.includes('work/arulis-dental-clinic')) return '/work/arulis-dental-clinic'
       if (window.location.hash.includes('work/atelier-estates')) return '/work/atelier-estates'
       if (window.location.hash.includes('work/maison-de-sucre')) return '/work/maison-de-sucre'
       if (window.location.hash.includes('work/aurex-performance-club')) return '/work/aurex-performance-club'
       if (window.location.hash.includes('work/drop-cult')) return '/work/drop-cult'
+      if (window.location.hash.includes('services/web-design-development')) return '/services/web-design-development'
+      if (window.location.hash.includes('services/brand-identity-design')) return '/services/brand-identity-design'
       if (window.location.hash.includes('admin')) return '/admin'
       return path
     }
@@ -214,6 +220,14 @@ export default function App() {
     currentRoute === '/work/drop-cult' || 
     currentRoute.startsWith('/work/drop-cult')
 
+  const isWebDesignService = 
+    currentRoute === '/services/web-design-development' || 
+    currentRoute.startsWith('/services/web-design-development')
+
+  const isBrandIdentityService = 
+    currentRoute === '/services/brand-identity-design' || 
+    currentRoute.startsWith('/services/brand-identity-design')
+
   const isAdminRoute = 
     currentRoute === '/admin' || 
     currentRoute.startsWith('/admin')
@@ -273,6 +287,22 @@ export default function App() {
             onOpenContact={handleOpenContact}
           />
         </main>
+      ) : isWebDesignService ? (
+        <main className="w-full">
+          <WebDesignService 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+            onOpenAudit={handleOpenAudit}
+          />
+        </main>
+      ) : isBrandIdentityService ? (
+        <main className="w-full">
+          <BrandIdentityService 
+            onNavigate={handleNavigate}
+            onOpenContact={handleOpenContact}
+            onOpenAudit={handleOpenAudit}
+          />
+        </main>
       ) : (
         <>
           {/* Main Content Sections */}
@@ -290,7 +320,7 @@ export default function App() {
             />
 
             {/* Unified Frame 7: Services, IDEAS INTO IMPACT, Methodology, Team & Everyday Toolkit */}
-            <Approach onOpenContact={handleOpenContact} />
+            <Approach onOpenContact={handleOpenContact} onNavigate={handleNavigate} />
 
             {/* Let's Make It Happen CTA */}
             <CTASection onOpenContact={handleOpenContact} />
